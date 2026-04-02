@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>週案集計くん V5 - 最終完成版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 p-4">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="flex justify-between items-center mb-6 bg-indigo-700 p-6 rounded-2xl shadow-xl text-white">
+            <div>
+                <h1 class="text-2xl font-bold">📅 週案集計くん V5</h1>
+                <p class="text-xs opacity-80 mt-1">完全無料・PDF対応・画像履歴機能つき</p>
+            </div>
+            <div id="status" class="hidden px-4 py-2 bg-indigo-800 rounded-full text-sm font-bold animate-pulse">待機中</div>
+        </header>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <div class="lg:col-span-4 space-y-6">
+                <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="font-bold mb-4 flex items-center text-indigo-600">
+                        <span class="mr-2">📁</span>ファイル読み込み
+                    </h2>
+                    <label class="block w-full border-2 border-dashed border-slate-300 rounded-xl p-6 text-center cursor-pointer hover:border-indigo-500 bg-slate-50 transition-all">
+                        <input type="file" id="fileInput" accept="image/*,application/pdf" class="hidden">
+                        <span class="text-sm text-slate-500 font-medium">画像またはPDFを選択</span>
+                    </label>
+                    <canvas id="pdfCanvas" class="hidden"></canvas>
+                </section>
+
+                <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="font-bold mb-4 flex items-center text-indigo-600">
+                        <span class="mr-2">✏️</span>今週の集計結果
+                    </h2>
+                    <div id="resultArea" class="grid grid-cols-2 gap-2 max-h-[350px] overflow-y-auto">
+                        </div>
+                    <div class="mt-6 pt-4 border-t border-slate-100">
+                        <div class="flex justify-between items-baseline mb-4">
+                            <span class="text-sm text-slate-500">週合計</span>
+                            <span class="text-3xl font-black text-indigo-600"><span id="weeklyTotal">0</span> <small class="text-xs">h</small></span>
+                        </div>
+                        <input type="text" id="weekNote" placeholder="例：4月第2週" class="w-full mb-3 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                        <button id="saveData" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-indigo-700 active:scale-95 transition-all">履歴に保存する</button>
+                    </div>
+                </section>
+            </div>
+
+            <div class="lg:col-span-8 space-y-6">
+                <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="font-bold text-lg">📊 科目別累計時数</h2>
+                        <button id="downloadBtn" class="text-[10px] bg-emerald-500 text-white px-3 py-1 rounded-full hover:bg-emerald-600 transition-colors">CSV出力</button>
+                    </div>
+                    <div id="totalArea" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+                        </div>
+                </section>
+
+                <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <h2 class="font-bold mb-4 text-slate-400 text-xs uppercase tracking-widest">保存済み履歴 (画像タップで確認)</h2>
+                    <div id="historyArea" class="space-y-3 overflow-y-auto max-h-[400px] pr-2">
+                        </div>
+                    <div class="mt-8 flex justify-end">
+                        <button id="clearData" class="text-[10px] text-slate-300 hover:text-red-400">全データを削除</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <div id="imageModal" class="fixed inset-0 bg-black/80 hidden z-50 flex items-center justify-center p-4 transition-opacity" onclick="this.classList.add('hidden')">
+        <div class="max-w-4xl w-full max-h-full overflow-auto bg-white rounded-xl p-2 relative shadow-2xl" onclick="event.stopPropagation()">
+            <button class="absolute top-4 right-4 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-black/70" onclick="document.getElementById('imageModal').classList.add('hidden')">✕</button>
+            <img id="modalImage" src="" class="w-full h-auto rounded-lg">
+            <div id="modalData" class="p-4 text-xs border-t grid grid-cols-3 sm:grid-cols-6 gap-2 mt-2 bg-slate-50 rounded-b-lg"></div>
+        </div>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        // --- 改善ポイント①：正規表現を文字列で定義（バグ回避） ---
+        const subjectPatterns = {
+            "国語": "国語|こくご|困語",
+            "社会": "社会|しゃかい|杜会",
+            "算数": "算数|さんすう",
+            "理科": "理科|りか",
+            "生活": "生活|せいかつ",
+            "音楽": "音楽|おんがく",
+            "図工": "図工|ずこう",
+            "家庭": "家庭|かてい",
+            "体育": "体育|たいいく",
+            "道徳": "道徳|どうとく",
+            "外国語": "外国語|英語|English",
+            "総合": "総合|そうごう",
+            "書写": "書写|書き方|かきかた",
+            "図書": "図書|図書館",
+            "委員会": "委員会|いいんかい",
+            "クラブ": "クラブ|くらぶ",
+            "特活": "特活|学級会|学級活動",
+            "行事": "行事|入学式|卒業式|遠足|避難訓練"
+        };
+
+        let currentWeekData = {};
+        let currentImageBase64 = null;
+        let db;
+
+        const request = indexedDB.open("ShuanDB", 1);
+        request.onupgradeneeded = e => {
+            db = e.target.result;
+            db.createObjectStore("history", { keyPath: "id", autoIncrement: true });
+        };
+        request.onsuccess = e => {
+            db = e.target.result;
+            updateDisplay();
+        };
+
+        const fileInput = document.getElementById('fileInput');
+        const status = document.getElementById('status');
+        const resultArea = document.getElementById('resultArea');
+
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            status.classList.remove('hidden');
+            status.innerText = "⏳ 読み込み中...";
+
+            if (file.type === "application/pdf") {
+                const reader = new FileReader();
+                reader.onload = async function() {
+                    const typedarray = new Uint8Array(this.result);
+                    const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                    const page = await pdf.getPage(1);
+                    const canvas = document.getElementById('pdfCanvas');
+                    const context = canvas.getContext('2d');
+                    const viewport = page.getViewport({ scale: 2.0 });
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    await page.render({ canvasContext: context, viewport: viewport }).promise;
+                    currentImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    runOCR(currentImageBase64);
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    currentImageBase64 = e.target.result;
+                    runOCR(currentImageBase64);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        async function runOCR(source) {
+            status.innerText = "🔍 スキャン中...";
+            const { data: { text } } = await Tesseract.recognize(source, 'jpn', {
+                logger: m => { if(m.status === 'recognizing') status.innerText = `解析中: ${Math.floor(m.progress * 100)}%`; }
+            });
+            status.innerText = "✅ 完了";
+            setTimeout(() => status.classList.add('hidden'), 2000);
+            analyzeText(text);
+        }
+
+        function analyzeText(text) {
+            currentWeekData = {};
+            Object.keys(subjectPatterns).forEach(s => currentWeekData[s] = 0);
+            
+            const lines = text.split('\n');
+            lines.forEach(line => {
+                const trimmed = line.trim();
+                if (trimmed.length < 2) return;
+                
+                // --- 改善ポイント④：曜日ノイズの完全除去 ---
+                if (/^[月火水木金土日\s]+$/.test(trimmed)) return;
+
+                // --- 改善ポイント②・③：breakを削除し、出現回数をカウント ---
+                for (const [subject, patternStr] of Object.entries(subjectPatterns)) {
+                    // 毎度新しいRegExpを生成し、状態保持バグを回避
+                    const regex = new RegExp(patternStr, 'g');
+                    const matches = trimmed.match(regex);
+                    if (matches) {
+                        currentWeekData[subject] += matches.length;
+                    }
+                }
+            });
+            renderEditArea();
+        }
+
+        function renderEditArea() {
+            resultArea.innerHTML = "";
+            Object.keys(currentWeekData).forEach(s => {
+                resultArea.innerHTML += `
+                    <div class="flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100 hover:border-indigo-200 transition-colors">
+                        <span class="text-[11px] font-bold text-slate-600">${s}</span>
+                        <input type="number" step="0.5" value="${currentWeekData[s]}" 
+                            class="w-10 bg-transparent text-right font-black text-indigo-600 outline-none" 
+                            onchange="currentWeekData['${s}'] = parseFloat(this.value); updateWeeklyTotal();">
+                    </div>`;
+            });
+            updateWeeklyTotal();
+        }
+
+        function updateWeeklyTotal() {
+            const total = Object.values(currentWeekData).reduce((a, b) => a + b, 0);
+            document.getElementById('weeklyTotal').innerText = total;
+        }
+
+        function updateDisplay() {
+            const transaction = db.transaction(["history"], "readonly");
+            const store = transaction.objectStore("history");
+            const getAll = store.getAll();
+
+            getAll.onsuccess = () => {
+                const history = getAll.result;
+                const totals = {};
+                history.forEach(w => {
+                    Object.entries(w.data).forEach(([s, val]) => totals[s] = (totals[s] || 0) + val);
+                });
+
+                document.getElementById('totalArea').innerHTML = Object.keys(subjectPatterns).map(s => `
+                    <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 shadow-sm flex flex-col items-center justify-center">
+                        <div class="text-[10px] text-indigo-500 font-bold">${s}</div>
+                        <div class="text-xl font-black text-indigo-900">${totals[s] || 0}<small class="text-[10px] font-normal opacity-60 ml-0.5">h</small></div>
+                    </div>`).join('');
+
+                document.getElementById('historyArea').innerHTML = history.reverse().map(w => {
+                    const weekTotal = Object.values(w.data).reduce((a,b)=>a+b,0);
+                    return `
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 flex justify-between items-center hover:bg-slate-50 hover:border-indigo-300 cursor-pointer transition-all" onclick="showPreview(${w.id})">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-slate-100 rounded-lg overflow-hidden border flex-shrink-0">
+                                ${w.img ? `<img src="${w.img}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-[8px] text-slate-400">No Image</div>`}
+                            </div>
+                            <div>
+                                <div class="font-bold text-slate-700 text-sm">${w.note}</div>
+                                <div class="text-[10px] text-slate-400">${w.date}</div>
+                            </div>
+                        </div>
+                        <div class="font-black text-slate-500 px-3 py-1 bg-slate-100 rounded-full text-sm">${weekTotal} h</div>
+                    </div>`
+                }).join('');
+            };
+        }
+
+        document.getElementById('saveData').addEventListener('click', () => {
+            // --- 改善ポイント⑤：0だけの週を弾く ---
+            const total = Object.values(currentWeekData).reduce((a, b) => a + b, 0);
+            if (total === 0) {
+                alert("データが0時間です。読み取りを確認するか、手動で時数を入力してください。");
+                return;
+            }
+
+            const note = document.getElementById('weekNote').value || "無題の週";
+            const entry = {
+                note: note,
+                date: new Date().toLocaleString(),
+                data: {...currentWeekData},
+                img: currentImageBase64
+            };
+            
+            const transaction = db.transaction(["history"], "readwrite");
+            transaction.objectStore("history").add(entry);
+            transaction.oncomplete = () => {
+                updateDisplay();
+                alert("保存しました！");
+            };
+        });
+
+        window.showPreview = function(id) {
+            const transaction = db.transaction(["history"], "readonly");
+            const store = transaction.objectStore("history");
+            store.get(id).onsuccess = e => {
+                const w = e.target.result;
+                const imgEl = document.getElementById('modalImage');
+                if (w.img) {
+                    imgEl.src = w.img;
+                    imgEl.style.display = 'block';
+                } else {
+                    imgEl.style.display = 'none';
+                }
+                
+                document.getElementById('modalData').innerHTML = Object.entries(w.data)
+                    .filter(([s, v]) => v > 0) // 0時間の科目はプレビューで隠す（見やすくするため）
+                    .map(([s,v]) => `<div class="text-center"><div class="text-slate-400 text-[10px]">${s}</div><div class="font-bold text-indigo-600">${v}</div></div>`).join('');
+                document.getElementById('imageModal').classList.remove('hidden');
+            };
+        }
+
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            const store = db.transaction(["history"], "readonly").objectStore("history");
+            store.getAll().onsuccess = e => {
+                const history = e.target.result;
+                let csv = "\uFEFF週,日付," + Object.keys(subjectPatterns).join(",") + ",合計\n";
+                history.forEach(w => {
+                    let row = [w.note, w.date];
+                    let total = 0;
+                    Object.keys(subjectPatterns).forEach(s => {
+                        let val = w.data[s] || 0;
+                        row.push(val); total += val;
+                    });
+                    row.push(total);
+                    csv += row.join(",") + "\n";
+                });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+                link.download = `週案累計_${new Date().toLocaleDateString()}.csv`;
+                link.click();
+            };
+        });
+
+        document.getElementById('clearData').addEventListener('click', () => {
+            if(confirm("全データを削除します。画像履歴も消えますがよろしいですか？")) {
+                db.transaction(["history"], "readwrite").objectStore("history").clear();
+                updateDisplay();
+            }
+        });
+    </script>
+</body>
+</html>
