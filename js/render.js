@@ -305,71 +305,109 @@ function renderSidebar(state, selected) {
   const target = document.getElementById("editorPanel");
   if (!target) return;
 
-  const current = selected && selected.dateKey !== "__week__"
-    ? WEEKLY_PLAN.getCell(state, selected.dateKey, selected.rowId)
-    : null;
-  const currentRow = selected && selected.dateKey !== "__week__"
-    ? WEEKLY_PLAN.getRowDef(selected.rowId)
-    : null;
-  const currentHoliday = selected && selected.dateKey !== "__week__"
-    ? WEEKLY_PLAN.getAnnualHolidayForDate(state, selected.dateKey)
-    : null;
+  const current = selected && selected.dateKey !== "__week__" ? WEEKLY_PLAN.getCell(state, selected.dateKey, selected.rowId) : null;
+  const currentRow = selected && selected.dateKey !== "__week__" ? WEEKLY_PLAN.getRowDef(selected.rowId) : null;
+  const currentHoliday = selected && selected.dateKey !== "__week__" ? WEEKLY_PLAN.getAnnualHolidayForDate(state, selected.dateKey) : null;
+  const dates = WEEKLY_PLAN.getWeekDatesFromState(state);
+  const counts = calculateSubjectCounts(state);
+  const total = Object.values(counts).reduce(function(sum, value) { return sum + value; }, 0);
 
-  const totalCounts = calculateSubjectCounts(state);
-  const total = Object.values(totalCounts).reduce(function(sum, value) { return sum + value; }, 0);
+  const lessonRows = WEEKLY_PLAN.ROW_DEFS.filter(function(row) {
+    return row.type === "lesson" && row.period <= state.settings.periodCount && state.settings.visible[row.id] !== false;
+  });
+  let lessonSlots = 0, filledSlots = 0, noteCount = 0, holidayCount = 0;
+  const weekEvents = [];
 
-  let detail = '<div class="empty-selection compact"><div class="selection-icon">⌁</div><div><h2>週案を直接入力</h2><p>教科と単元名は表のマスに直接入力できます。授業のメモはここで管理します。</p></div></div>';
+  dates.forEach(function(date) {
+    const dateKey = WEEKLY_PLAN.toISODate(date);
+    const holiday = WEEKLY_PLAN.getAnnualHolidayForDate(state, dateKey);
+    if (holiday) holidayCount += 1;
+    WEEKLY_PLAN.getAnnualEntriesForDate(state, dateKey).forEach(function(entry) {
+      if (weekEvents.every(function(item) { return item.id !== entry.id; })) weekEvents.push(entry);
+    });
+    if (!holiday) {
+      lessonRows.forEach(function(row) {
+        lessonSlots += 1;
+        const cell = WEEKLY_PLAN.getCell(state, dateKey, row.id);
+        if (cell.subject) filledSlots += 1;
+        if (cell.note) noteCount += 1;
+      });
+    }
+  });
+
+  const remaining = Math.max(0, lessonSlots - filledSlots);
+  const status = remaining === 0 && lessonSlots ? "入力済み" : remaining + "コマ未入力";
+  const timetableTotal = (state.settings.weekdays || [1,2,3,4,5]).reduce(function(sum, day) {
+    for (let p = 1; p <= state.settings.periodCount; p += 1) {
+      if (state.timetable && state.timetable[day] && state.timetable[day][p]) sum += 1;
+    }
+    return sum;
+  }, 0);
+
+  const events = weekEvents.slice(0, 5).map(function(entry) {
+    return '<li><span class="dashboard-event-kind ' + (entry.kind === "holiday" ? "holiday" : "") + '">' +
+      (entry.kind === "holiday" ? "休日" : "予定") + '</span><span>' + escapeHTML(entry.name) + '</span></li>';
+  }).join("");
+
+  const subjects = WEEKLY_PLAN.SUBJECTS.filter(function(subject) {
+    return counts[subject.id];
+  }).map(function(subject) {
+    return '<div class="dashboard-subject"><span class="dashboard-subject-name"><i style="background:' +
+      escapeHTML(subject.color) + '"></i>' + escapeHTML(subject.label) + '</span><strong>' + counts[subject.id] + '</strong></div>';
+  }).join("");
+
+  let detail = '<div class="empty-selection compact"><div class="selection-icon">⌁</div><div><h2>コマを選ぶと詳細表示</h2><p>表をクリックすると、教科・単元・授業メモをここで確認できます。</p></div></div>';
 
   if (current && currentRow && currentRow.type === "lesson" && !currentHoliday) {
     const date = WEEKLY_PLAN.fromISODate(selected.dateKey);
     const dayLabel = formatJapaneseDate(date) + "・" + currentRow.period + "時間目";
-    const subjectButtons = WEEKLY_PLAN.SUBJECTS.map(function(subject) {
+    const buttons = WEEKLY_PLAN.SUBJECTS.map(function(subject) {
       const active = current.subject === subject.id;
       return '<button type="button" class="subject-quick' + (active ? " active" : "") +
-        '" data-subject-quick="' + escapeHTML(subject.id) + '" style="--subject-color:' +
-        escapeHTML(subject.color) + '">' + escapeHTML(subject.label) + '</button>';
+        '" data-subject-quick="' + escapeHTML(subject.id) + '" style="--subject-color:' + escapeHTML(subject.color) + '">' +
+        escapeHTML(subject.label) + '</button>';
     }).join("");
-
     detail =
       '<div class="selected-cell-label">' + escapeHTML(dayLabel) + '</div>' +
-      '<div class="subject-quick-grid">' + subjectButtons + '</div>' +
+      '<div class="subject-quick-grid">' + buttons + '</div>' +
       '<label class="field right-detail-field"><span>単元名</span><input id="sideUnit" type="text" value="' +
-        escapeHTML(current.unit || "") + '" placeholder="選択中の単元名"></label>' +
+      escapeHTML(current.unit || "") + '" placeholder="選択中の単元名"></label>' +
       '<label class="field right-detail-field"><span>メモ（プレビュー・印刷には表示しません）</span><textarea id="sideNote" rows="4" placeholder="この授業についてのメモ">' +
-        escapeHTML(current.note || "") + '</textarea></label>' +
-      '<div class="quick-tool-actions">' +
-        '<button type="button" class="secondary-button" id="copyUnitWeek">この単元名を同じ教科のコマへ反映</button>' +
-        '<button type="button" class="ghost-button block-button" id="clearCell">このコマをクリア</button>' +
-      '</div>';
+      escapeHTML(current.note || "") + '</textarea></label>' +
+      '<div class="quick-tool-actions"><button type="button" class="secondary-button" id="copyUnitWeek">この単元名を同じ教科のコマへ反映</button>' +
+      '<button type="button" class="ghost-button block-button" id="clearCell">このコマをクリア</button></div>';
   } else if (currentHoliday) {
-    detail =
-      '<div class="empty-selection compact holiday-side-card"><div class="selection-icon">休</div><div><h2>' +
-        escapeHTML(currentHoliday.name) + '</h2><p>祝日に登録されています。この日は全日が休日として扱われ、授業時数にはカウントされません。</p></div></div>';
+    detail = '<div class="empty-selection compact holiday-side-card"><div class="selection-icon">休</div><div><h2>' +
+      escapeHTML(currentHoliday.name) + '</h2><p>この日は休日です。授業時数にはカウントされません。</p></div></div>';
   } else if (selected && selected.dateKey === "__week__") {
-    detail =
-      '<div class="empty-selection compact"><div class="selection-icon">⌁</div><div><h2>お知らせ</h2><p>お知らせは週案下部へ直接入力できます。</p></div></div>';
+    detail = '<div class="empty-selection compact"><div class="selection-icon">⌁</div><div><h2>お知らせ</h2><p>週案の下にある「お知らせ」へ直接入力できます。</p></div></div>';
   }
 
-  const summary = WEEKLY_PLAN.SUBJECTS.filter(function(subject) {
-    return totalCounts[subject.id];
-  }).map(function(subject) {
-    return '<div class="summary-mini-item"><span>' + escapeHTML(subject.label) +
-      '</span><strong>' + totalCounts[subject.id] + '</strong></div>';
-  }).join("");
-
   target.innerHTML =
-    '<section class="selection-card convenience-card">' +
-      '<div class="selection-card-head"><div><span class="eyebrow">QUICK TOOLS</span><h2>便利機能</h2></div></div>' +
-      detail +
-    '</section>' +
-    '<section class="settings-section summary-tool-card">' +
-      '<div class="section-heading"><div><span class="eyebrow">WEEK TOTAL</span><h2>今週の時数</h2></div>' +
-      '<button type="button" class="ghost-button" id="openSettings">設定</button></div>' +
-      '<div class="summary-mini-total"><span>合計</span><strong>' + total + '<small>時間</small></strong></div>' +
-      '<div class="summary-mini-grid">' + (summary || '<span class="count-empty">まだ教科が入力されていません</span>') + '</div>' +
-    '</section>';
-}
+    '<section class="dashboard-hero"><div class="dashboard-hero-head"><div><span class="eyebrow">WEEK DESK</span><h2>今週の確認</h2></div>' +
+      '<span class="dashboard-status ' + (remaining === 0 && lessonSlots ? "complete" : "") + '">' + status + '</span></div>' +
+      '<div class="dashboard-metrics"><div><span>授業</span><strong>' + total + '<small>時間</small></strong></div>' +
+      '<div><span>未入力</span><strong>' + remaining + '<small>コマ</small></strong></div>' +
+      '<div><span>予定</span><strong>' + weekEvents.length + '<small>件</small></strong></div></div>' +
+      '<div class="dashboard-progress"><span style="width:' + (lessonSlots ? Math.round(filledSlots / lessonSlots * 100) : 0) + '%"></span></div>' +
+      '<div class="dashboard-progress-note"><span>' + filledSlots + ' / ' + lessonSlots + ' コマ入力済み</span><span>' +
+      (holidayCount ? holidayCount + '日休み' : '休日なし') + '・' + noteCount + '件の授業メモ</span></div></section>' +
 
+    '<section class="dashboard-section"><div class="dashboard-section-head"><div><span class="eyebrow">SUBJECT HOURS</span><h3>教科別の時数</h3></div><span class="dashboard-count-total">' +
+      total + '時間</span></div><div class="dashboard-subject-grid">' + (subjects || '<span class="count-empty">教科を入力すると、ここに集計されます</span>') + '</div></section>' +
+
+    '<section class="dashboard-section dashboard-two-column"><div><div class="dashboard-section-head"><div><span class="eyebrow">THIS WEEK</span><h3>今週の予定</h3></div></div>' +
+      (events ? '<ul class="dashboard-events">' + events + '</ul>' : '<p class="dashboard-empty">年間予定はありません。</p>') +
+      '<button type="button" class="ghost-button dashboard-action" id="sideAnnual">年間予定を確認</button></div>' +
+    '<div><div class="dashboard-section-head"><div><span class="eyebrow">TIMETABLE</span><h3>時間割</h3></div></div><p class="dashboard-timetable-status">' +
+      (timetableTotal ? timetableTotal + "コマ登録済み" : "まだ登録されていません") + '</p><button type="button" class="secondary-button dashboard-action" id="sideTimetable">時間割を確認・登録</button></div></section>' +
+
+    '<section class="selection-card convenience-card dashboard-detail"><div class="selection-card-head"><div><span class="eyebrow">QUICK TOOLS</span><h2>選択中のコマ</h2></div></div>' +
+      detail + '</section>' +
+
+    '<section class="settings-section summary-tool-card dashboard-settings-card"><div class="section-heading"><div><span class="eyebrow">SETTINGS</span><h3>週案の基本設定</h3></div>' +
+      '<button type="button" class="ghost-button" id="openSettings">設定を開く</button></div><p class="dashboard-settings-note">曜日・授業時数・行の表示・印刷レイアウトを調整できます。</p></section>';
+}
 function renderSelectedEditor() { return ""; }
 
 
