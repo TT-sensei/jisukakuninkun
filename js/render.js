@@ -405,6 +405,11 @@ function renderSidebar(state, selected) {
     '<section class="selection-card convenience-card dashboard-detail"><div class="selection-card-head"><div><span class="eyebrow">QUICK TOOLS</span><h2>選択中のコマ</h2></div></div>' +
       detail + '</section>' +
 
+    '<section class="settings-section dashboard-data-card"><div class="section-heading"><div><span class="eyebrow">DATA</span><h3>データを保管する</h3></div></div>' +
+      '<p class="dashboard-settings-note">別の端末でも使うなら、JSONを書き出してGoogle Driveに保存しておくと安心です。</p>' +
+      '<label class="field dashboard-drive-field"><span>Google Driveの保管フォルダ</span><input id="driveFolderUrl" type="url" value="' + escapeHTML(getDriveFolderUrl()) + '" placeholder="DriveフォルダのURLを貼り付け"></label>' +
+      '<div class="dashboard-data-actions"><button type="button" class="secondary-button" id="openDriveFolder">Google Driveを開く</button><button type="button" class="ghost-button" id="dashboardExport">JSONを書き出す</button><button type="button" class="ghost-button" id="dashboardImport">JSONを読み込む</button></div>' +
+      '<p class="dashboard-settings-note dashboard-drive-note">このアプリからDriveへ直接保存するのではなく、JSONをDriveに保管する方式です。</p></section>' +
     '<section class="settings-section summary-tool-card dashboard-settings-card"><div class="section-heading"><div><span class="eyebrow">SETTINGS</span><h3>週案の基本設定</h3></div>' +
       '<button type="button" class="ghost-button" id="openSettings">設定を開く</button></div><p class="dashboard-settings-note">曜日・授業時数・行の表示・印刷レイアウトを調整できます。</p></section>';
 }
