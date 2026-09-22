@@ -28,6 +28,7 @@
     <div class="header-actions">
       <span class="status-dot"><span id="saveStatus">保存済み</span></span>
       <button id="timetableButton" class="header-button" type="button">時間割登録</button>
+      <button id="openSettingsHeader" class="header-button" type="button">設定</button>
       <button id="newWeekButton" class="header-button" type="button">週を空にする</button>
       <button id="importButton" class="header-button" type="button">読み込み</button>
       <button id="exportButton" class="header-button" type="button">書き出し</button>
@@ -42,7 +43,7 @@
       <div class="preview-top">
         <div>
           <h2>週案プレビュー</h2>
-          <p>左のマスを選ぶと、右側に詳しい入力欄が開きます。</p>
+          <p>週案のマスを直接入力できます。右側には便利機能をまとめています。</p>
         </div>
         <div class="preview-tools">入力内容はこの端末に自動保存</div>
       </div>
@@ -51,12 +52,16 @@
       <div id="summaryArea" class="summary-area"></div>
     </section>
 
-    <aside class="settings-panel edu-card" aria-label="週案設定">
+    <aside class="settings-panel edu-card" aria-label="便利機能">
       <div id="editorPanel" class="editor-panel"></div>
     </aside>
   </main>
 
   <div id="timetableModal" class="timetable-modal hidden"></div>
+
+  <div id="settingsModal" class="settings-modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div id="settingsContent" class="settings-dialog"></div>
+  </div>
 
   <div id="shareModal" class="share-modal hidden" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
     <div class="share-dialog">
