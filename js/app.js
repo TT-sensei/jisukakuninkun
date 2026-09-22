@@ -138,7 +138,8 @@ function bindAppEvents() {
 }
 
 function startApp() {
-  WEEKLY_SHARE.loadShareStateFromURL();
+  const shareMode = WEEKLY_SHARE.loadShareStateFromURL();
+  if (shareMode === "view") document.body.classList.add("share-view");
   WEEKLY_EDITOR.bindEditorEvents();
   WEEKLY_TIMETABLE.bindTimetableEvents();
   WEEKLY_FILE.bindFileEvents();
