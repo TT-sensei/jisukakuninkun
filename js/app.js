@@ -39,13 +39,11 @@ function renderApp() {
 function clearCurrentWeek() {
   if (!confirm("今週の入力をすべて空にします。よろしいですか？")) return;
   const start = WEEKLY_PLAN.fromISODate(WEEKLY_STATE.state.meta.weekStart);
-  const cells = {};
   for (let i = 0; i < 7; i += 1) {
     const d = new Date(start);
     d.setDate(start.getDate() + i);
-    cells[WEEKLY_PLAN.toISODate(d)] = {};
+    WEEKLY_STATE.state.cells[WEEKLY_PLAN.toISODate(d)] = {};
   }
-  WEEKLY_STATE.state.cells = cells;
   WEEKLY_STATE.queueSave();
   window.WEEKLY_EDITOR.clearSelection();
 }
