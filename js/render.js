@@ -220,8 +220,7 @@ function renderSidebar(state, selected) {
         (state.settings.printOrientation === "portrait" ? " checked" : "") + "><span>A4 縦</span></label>" +
         '<label><input type="radio" name="printOrientation" value="landscape"' +
         (state.settings.printOrientation === "landscape" ? " checked" : "") + "><span>A4 横</span></label></div>" +
-      '<label class="check-line"><input type="checkbox" id="showTimeCount"' +
-        (state.settings.showTimeCount ? " checked" : "") + '><span>印刷にも時数集計を表示</span></label>' +
+      '<p class="input-help">時数は画面下部に教科ごとに表示されます。印刷には入りません。</p>' +
     "</section>";
 }
 
