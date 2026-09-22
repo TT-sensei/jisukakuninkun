@@ -11,6 +11,11 @@ function buildSharePayload() {
     version: state.version,
     meta: { ...state.meta },
     settings: JSON.parse(JSON.stringify(state.settings)),
+    calendar: {
+      annual: state.calendar && Array.isArray(state.calendar.annual)
+        ? JSON.parse(JSON.stringify(state.calendar.annual))
+        : []
+    },
     cells: weekKeys
   };
 }
