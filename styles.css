@@ -1804,64 +1804,31 @@ button { cursor: pointer; }
 }
 
 
-/* Cloud sync ---------------------------------------------------------- */
-.cloud-explain {
+
+/* Google Drive link ---------------------------------------------------- */
+.drive-explain {
   margin: -2px 0 11px;
   color: var(--muted);
   font-size: 11px;
   line-height: 1.55;
 }
 
-.cloud-account-box {
-  display: grid;
-  gap: 3px;
-  margin: 5px 0 10px;
-  padding: 10px 11px;
-  border: 1px solid #d6dde1;
-  border-radius: 9px;
-  background: #f7f9fa;
-}
-
-.cloud-account-box > span {
-  color: #68747c;
-  font-size: 9px;
-  font-weight: 800;
-}
-
-.cloud-account-box > strong {
-  font-size: 12px;
-  overflow-wrap: anywhere;
-}
-
-.cloud-account-box > small {
-  color: var(--muted);
-  font-size: 9px;
-}
-
-.cloud-actions-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+.drive-actions {
+  display: flex;
   gap: 6px;
 }
 
-.cloud-actions-grid .secondary-button,
-.cloud-actions-grid .ghost-button {
+.drive-actions .secondary-button {
   width: 100%;
   margin-top: 0;
   min-height: 38px;
 }
 
-.cloud-security-note {
+.drive-note {
   margin-top: 9px;
   padding-top: 8px;
   border-top: 1px solid #edf0f2;
   color: var(--muted);
   font-size: 9px;
   line-height: 1.55;
-}
-
-@media (max-width: 560px) {
-  .cloud-actions-grid {
-    grid-template-columns: 1fr;
-  }
 }
