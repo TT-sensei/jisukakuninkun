@@ -398,7 +398,7 @@ function bindEditorEvents() {
       openSettingsModal();
       return;
     }
-
+\n    if (event.target.closest("#sideAnnual")) {\n      openAnnualModal();\n      return;\n    }\n\n    if (event.target.closest("#sideTimetable")) {\n      if (window.WEEKLY_TIMETABLE && WEEKLY_TIMETABLE.renderTimetableModal) WEEKLY_TIMETABLE.renderTimetableModal();\n      return;\n    }\n
     if (event.target.closest("#settingsClose")) {
       closeSettingsModal();
       return;
