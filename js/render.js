@@ -236,7 +236,22 @@ function renderPreview(state) {
     "</div>";
 
   document.documentElement.dataset.orientation = state.settings.printOrientation;
+  positionHolidayOverlays();
   renderSummary(state);
+}
+
+function positionHolidayOverlays() {
+  const table = document.querySelector(".weekly-table");
+  if (!table) return;
+
+  const tableRect = table.getBoundingClientRect();
+  const headRow = table.querySelector(".head-row");
+  const headHeight = headRow ? headRow.getBoundingClientRect().height : 0;
+  const spanHeight = Math.max(220, Math.round(tableRect.height - headHeight - 8));
+
+  table.querySelectorAll(".holiday-head-label").forEach(function(label) {
+    label.style.setProperty("--holiday-span-height", spanHeight + "px");
+  });
 }
 
 function renderSummary(state) {
