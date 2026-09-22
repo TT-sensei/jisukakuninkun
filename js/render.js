@@ -131,11 +131,16 @@ function updatePrintTextView(cellEl, text) {
   if (!cellEl) return;
   const dateKey = cellEl.dataset.date;
   const rowId = cellEl.dataset.rowId;
-  const derived = rowId === "event" ? WEEKLY_PLAN.getAnnualEventTextForDate(WEEKLY_STATE.state, dateKey) : "";
   const holiday = WEEKLY_PLAN.getAnnualHolidayForDate(WEEKLY_STATE.state, dateKey);
+  const derived = rowId === "event"
+    ? WEEKLY_PLAN.getAnnualEntriesForDate(WEEKLY_STATE.state, dateKey)
+        .filter(function(entry) { return entry.kind !== "holiday"; })
+        .map(function(entry) { return entry.name; })
+        .join("\n")
+    : "";
   const displayText = rowId === "event"
     ? [derived, text].filter(Boolean).join("\n")
-    : (text || (holiday ? holiday.name : ""));
+    : (text || "");
   const out = cellEl.querySelector(".print-text");
   if (out) out.innerHTML = displayText ? escapeHTML(displayText).replaceAll("\n", "<br>") : "";
   cellEl.classList.toggle("has-content", !!displayText);
