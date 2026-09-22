@@ -96,9 +96,8 @@ function updateInlineSubject(element) {
     cell.subject = element.value;
   }
   WEEKLY_STATE.queueSave();
-  WEEKLY_RENDER.updatePrintLessonView(cellEl, cell);
+  WEEKLY_RENDER.renderAllWithSelection();
   WEEKLY_RENDER.renderSummary(WEEKLY_STATE.state);
-  if (selectedCell) WEEKLY_RENDER.renderSidebar(WEEKLY_STATE.state, selectedCell);
 }
 
 function updateSelectedLessonField(field, value) {
@@ -130,6 +129,7 @@ function updateSelectedLessonField(field, value) {
   }
   WEEKLY_RENDER.renderSummary(WEEKLY_STATE.state);
   WEEKLY_RENDER.renderSidebar(WEEKLY_STATE.state, selectedCell);
+  if (field === "subject") WEEKLY_RENDER.renderAllWithSelection();
 }
 
 function updateSelectedText(value) {
