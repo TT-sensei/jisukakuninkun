@@ -46,11 +46,17 @@
           <h2>週案プレビュー</h2>
           <p>週案のマスを直接入力できます。右側には便利機能をまとめています。</p>
         </div>
-        <div class="preview-tools">入力内容はこの端末に自動保存</div>
+        <div class="preview-tools">
+          <label class="preview-zoom-control">
+            <span>表示倍率</span>
+            <input id="previewZoom" type="range" min="70" max="110" step="5" value="90" aria-label="週案プレビューの表示倍率">
+            <output id="previewZoomValue">90%</output>
+          </label>
+          <span class="preview-save-note">入力内容は自動保存</span>
+        </div>
       </div>
 
       <div id="planPreview" class="plan-preview-wrap"></div>
-      <div id="summaryArea" class="summary-area"></div>
     </section>
 
     <aside class="settings-panel edu-card" aria-label="便利機能">
