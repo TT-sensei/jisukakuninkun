@@ -171,10 +171,12 @@ function normalizeState(raw) {
     calendar: {
       annual: Array.isArray(source.calendar && source.calendar.annual)
         ? source.calendar.annual.map(function(entry) {
+            const startDate = normalizeAnnualDate(entry.startDate || entry.date);
+            const endDate = normalizeAnnualDate(entry.endDate || entry.startDate || entry.date) || startDate;
             return {
               id: String(entry.id || ""),
-              startDate: toISODate(entry.startDate || entry.date || base.meta.weekStart),
-              endDate: toISODate(entry.endDate || entry.startDate || entry.date || base.meta.weekStart),
+              startDate,
+              endDate: endDate && endDate >= startDate ? endDate : startDate,
               kind: entry.kind === "holiday" ? "holiday" : "event",
               name: String(entry.name || entry.eventName || "").trim()
             };
@@ -184,6 +186,8 @@ function normalizeState(raw) {
         : []
     }
   };
+
+  state.version = WEEKLY_PLAN_VERSION;
 
   state.meta.weekStart = toISODate(getMonday(fromISODate(state.meta.weekStart || base.meta.weekStart)));
   state.settings.weekdays = (Array.isArray(state.settings.weekdays) ? state.settings.weekdays : [1,2,3,4,5])
