@@ -380,8 +380,8 @@ function renderSidebar(state, selected) {
       '<div class="subject-quick-grid">' + buttons + '</div>' +
       '<label class="field right-detail-field"><span>単元名</span><input id="sideUnit" type="text" value="' +
       escapeHTML(currentAbsent ? "" : (current.unit || "")) + '" placeholder="選択中の単元名"' + (currentAbsent ? " disabled" : "") + '></label>' +
-      '<label class="field right-detail-field"><span>メモ（プレビュー・印刷には表示しません）</span><textarea id="sideNote" rows="4" placeholder="この授業についてのメモ">' +
-      escapeHTML(currentAbsent ? "" : (current.note || "")) + '"' + (currentAbsent ? " disabled" : "") + '></textarea></label>' +
+      '<label class="field right-detail-field"><span>メモ（プレビュー・印刷には表示しません）</span><textarea id="sideNote" rows="4" placeholder="この授業についてのメモ"' + (currentAbsent ? " disabled" : "") + '>' +
+      escapeHTML(currentAbsent ? "" : (current.note || "")) + '</textarea></label>' +
       '<label class="test-highlight-toggle"><input id="testHighlight" type="checkbox"><span>このコマを強調表示</span></label>' +
       '<div class="quick-tool-actions"><button type="button" class="secondary-button" id="copyUnitWeek">この単元名を同じ教科のコマへ反映</button>' +
       '<button type="button" class="ghost-button block-button" id="clearCell">このコマをクリア</button></div>';
