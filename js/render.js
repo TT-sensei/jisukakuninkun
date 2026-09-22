@@ -460,8 +460,7 @@ function renderSettingsModal(state) {
       '<div class="segmented"><label><input type="radio" name="printOrientation" value="portrait"' +
         (state.settings.printOrientation === "portrait" ? " checked" : "") + '><span>A4 縦</span></label>' +
         '<label><input type="radio" name="printOrientation" value="landscape"' +
-        (state.settings.printOrientation === "landscape" ? " checked" : "") + '><span>A4 横</span></label></div></section>' +
-
+        (state.settings.printOrientation === "landscape" ? " checked" : "") + '><span>A4 横</span></label></div></section>';
 }
 
 
