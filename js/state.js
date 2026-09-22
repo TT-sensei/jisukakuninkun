@@ -1,4 +1,5 @@
-const STORAGE_KEY = "tt-sensei-weekly-plan-v1";
+
+const STORAGE_KEY = "tt-sensei-weekly-plan-v2";
 
 function loadLocalState() {
   try {
@@ -22,10 +23,10 @@ function saveLocalState() {
   }
 }
 
-function replaceState(nextState) {
+function replaceState(nextState, dispatch = true) {
   appState = WEEKLY_PLAN.normalizeState(nextState);
   saveLocalState();
-  window.dispatchEvent(new CustomEvent("weekly-plan:state"));
+  if (dispatch) window.dispatchEvent(new CustomEvent("weekly-plan:state"));
 }
 
 function resetState() {
@@ -36,9 +37,8 @@ let saveTimer = null;
 function queueSave() {
   setSaveStatus("変更中…");
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
+  saveTimer = setTimeout(function() {
     saveLocalState();
-    window.dispatchEvent(new CustomEvent("weekly-plan:state"));
   }, 250);
 }
 
@@ -48,14 +48,9 @@ function setSaveStatus(text) {
 }
 
 function shiftWeek(delta) {
-  const monday = WEEKLY_PLAN.getMonday(WEEKLY_PLAN.fromISODate(appState.meta.weekStart));
+  const monday = WEEKLY_PLAN.getMonday(WEEKLY_STATE.state.meta.weekStart);
   monday.setDate(monday.getDate() + delta * 7);
   appState.meta.weekStart = WEEKLY_PLAN.toISODate(monday);
-
-  for (const day of WEEKLY_PLAN.getWeekDates(appState.meta.weekStart, [0,1,2,3,4,5,6])) {
-    const key = WEEKLY_PLAN.toISODate(day);
-    if (!appState.cells[key]) appState.cells[key] = {};
-  }
   queueSave();
   window.dispatchEvent(new CustomEvent("weekly-plan:state"));
 }
