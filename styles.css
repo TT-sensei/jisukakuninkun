@@ -994,7 +994,4 @@ button { cursor: pointer; }
     font-size: 22pt;
   }
 
-  html[data-orientation="landscape"] @page {
-    size: A4 landscape;
-  }
 }
