@@ -37,20 +37,20 @@ function renderLessonCell(state, dateKey, row) {
         (cell.subject === item.id ? " selected" : "") + ">" +
         escapeHTML(item.label) + "</option>";
     }).join("");
-  return '<td class="plan-cell lesson-cell ' + (cell.subject || cell.unit || cell.note ? "has-content" : "is-empty") +
+
+  return '<td class="plan-cell lesson-cell ' + (cell.subject || cell.unit ? "has-content" : "is-empty") +
     '" data-date="' + escapeHTML(dateKey) + '" data-row-id="' + row.id + '" style="--subject-color:' +
     escapeHTML(subject ? subject.color : "#b8c0c5") + '">' +
       '<div class="inline-lesson">' +
-        '<select class="inline-edit inline-subject" data-cell-field="subject">' + subjectOptions + '</select>' +
+        '<select class="inline-edit inline-subject" data-cell-field="subject" aria-label="教科">' +
+          subjectOptions +
+        '</select>' +
         '<input class="inline-edit inline-unit" data-cell-field="unit" type="text" value="' + escapeHTML(cell.unit || "") +
           '" placeholder="単元名" aria-label="単元名">' +
-        '<input class="inline-edit inline-note" data-cell-field="note" type="text" value="' + escapeHTML(cell.note || "") +
-          '" placeholder="メモ" aria-label="授業メモ">' +
       '</div>' +
-      '<div class="print-lesson" aria-hidden="true">' +
+      '<div class="print-lesson">' +
         '<div class="print-subject">' + escapeHTML(subject ? subject.label : "") + '</div>' +
         '<div class="print-unit">' + escapeHTML(cell.unit || "") + '</div>' +
-        '<div class="print-note">' + escapeHTML(cell.note || "") + "</div>" +
       '</div>' +
     '</td>';
 }
@@ -136,14 +136,17 @@ function renderWeekTable(state) {
 
 function calculateSubjectCounts(state) {
   const counts = {};
-  WEEKLY_PLAN.getVisibleRows(state).forEach(function(row) {
-    if (row.type !== "lesson") return;
-    WEEKLY_PLAN.getWeekDatesFromState(state).forEach(function(date) {
-      const key = WEEKLY_PLAN.toISODate(date);
-      const cell = WEEKLY_PLAN.getCell(state, key, row.id);
-      if (cell.subject) counts[cell.subject] = (counts[cell.subject] || 0) + 1;
-    });
-  });
+  const dates = WEEKLY_PLAN.getWeekDatesFromState(state);
+  for (const date of dates) {
+    const key = WEEKLY_PLAN.toISODate(date);
+    for (let period = 1; period <= state.settings.periodCount; period += 1) {
+      const rowId = "p" + period;
+      if (state.settings.visible[rowId] === false) continue;
+      const cell = WEEKLY_PLAN.getCell(state, key, rowId);
+      if (!cell || !cell.subject) continue;
+      counts[cell.subject] = (counts[cell.subject] || 0) + 1;
+    }
+  }
   return counts;
 }
 
@@ -213,35 +216,61 @@ function renderSidebar(state, selected) {
   const target = document.getElementById("editorPanel");
   if (!target) return;
 
-  const current = selected ? WEEKLY_PLAN.getCell(state, selected.dateKey, selected.rowId) : null;
-  const currentRow = selected && selected.rowId !== "notice" ? WEEKLY_PLAN.getRowDef(selected.rowId) : null;
+  const current = selected && selected.dateKey !== "__week__"
+    ? WEEKLY_PLAN.getCell(state, selected.dateKey, selected.rowId)
+    : null;
+  const currentRow = selected && selected.dateKey !== "__week__"
+    ? WEEKLY_PLAN.getRowDef(selected.rowId)
+    : null;
 
-  const subjectButtons = WEEKLY_PLAN.SUBJECTS.map(function(subject) {
-    const active = current && current.subject === subject.id;
-    return '<button type="button" class="subject-quick' + (active ? " active" : "") +
-      '" data-subject-quick="' + escapeHTML(subject.id) + '" style="--subject-color:' +
-      escapeHTML(subject.color) + '">' + escapeHTML(subject.label) + '</button>';
+  const totalCounts = calculateSubjectCounts(state);
+  const total = Object.values(totalCounts).reduce(function(sum, value) { return sum + value; }, 0);
+
+  let detail = '<div class="empty-selection compact"><div class="selection-icon">⌁</div><div><h2>週案を直接入力</h2><p>教科と単元名は表のマスに直接入力できます。授業のメモはここで管理します。</p></div></div>';
+
+  if (current && currentRow && currentRow.type === "lesson") {
+    const date = WEEKLY_PLAN.fromISODate(selected.dateKey);
+    const dayLabel = formatJapaneseDate(date) + "・" + currentRow.period + "時間目";
+    const subjectButtons = WEEKLY_PLAN.SUBJECTS.map(function(subject) {
+      const active = current.subject === subject.id;
+      return '<button type="button" class="subject-quick' + (active ? " active" : "") +
+        '" data-subject-quick="' + escapeHTML(subject.id) + '" style="--subject-color:' +
+        escapeHTML(subject.color) + '">' + escapeHTML(subject.label) + '</button>';
+    }).join("");
+
+    detail =
+      '<div class="selected-cell-label">' + escapeHTML(dayLabel) + '</div>' +
+      '<div class="subject-quick-grid">' + subjectButtons + '</div>' +
+      '<label class="field right-detail-field"><span>単元名</span><input id="sideUnit" type="text" value="' +
+        escapeHTML(current.unit || "") + '" placeholder="選択中の単元名"></label>' +
+      '<label class="field right-detail-field"><span>メモ（プレビュー・印刷には表示しません）</span><textarea id="sideNote" rows="4" placeholder="この授業についてのメモ">' +
+        escapeHTML(current.note || "") + '</textarea></label>' +
+      '<div class="quick-tool-actions">' +
+        '<button type="button" class="secondary-button" id="copyUnitWeek">この単元名を同じ教科のコマへ反映</button>' +
+        '<button type="button" class="ghost-button block-button" id="clearCell">このコマをクリア</button>' +
+      '</div>';
+  } else if (selected && selected.dateKey === "__week__") {
+    detail =
+      '<div class="empty-selection compact"><div class="selection-icon">⌁</div><div><h2>お知らせ</h2><p>お知らせは週案下部へ直接入力できます。</p></div></div>';
+  }
+
+  const summary = WEEKLY_PLAN.SUBJECTS.filter(function(subject) {
+    return totalCounts[subject.id];
+  }).map(function(subject) {
+    return '<div class="summary-mini-item"><span>' + escapeHTML(subject.label) +
+      '</span><strong>' + totalCounts[subject.id] + '</strong></div>';
   }).join("");
 
   target.innerHTML =
     '<section class="selection-card convenience-card">' +
       '<div class="selection-card-head"><div><span class="eyebrow">QUICK TOOLS</span><h2>便利機能</h2></div></div>' +
-      (selected && currentRow && currentRow.type === "lesson"
-        ? '<p class="selected-cell-label">' + escapeHTML(selected.dateKey) + "・" + currentRow.period + '時間目を選択中</p>' +
-          '<div class="subject-quick-grid">' + subjectButtons + '</div>' +
-          '<div class="quick-tool-actions">' +
-            '<button type="button" class="secondary-button" id="copyUnitWeek">選択中の単元を同じ教科へ反映</button>' +
-            '<button type="button" class="ghost-button block-button" id="clearCell">このコマをクリア</button>' +
-          '</div>'
-        : '<div class="empty-selection compact"><div class="selection-icon">⌁</div><div><h2>週案のマスを選択</h2><p>プレビューのマスへ、そのまま教科・単元・予定を入力できます。</p></div></div>') +
+      detail +
     '</section>' +
     '<section class="settings-section summary-tool-card">' +
       '<div class="section-heading"><div><span class="eyebrow">WEEK TOTAL</span><h2>今週の時数</h2></div>' +
       '<button type="button" class="ghost-button" id="openSettings">設定</button></div>' +
-      '<div class="summary-mini">' +
-        '<div><span>合計</span><strong>' + Object.values(calculateSubjectCounts(state)).reduce(function(sum, value) { return sum + value; }, 0) + '<small>時間</small></strong></div>' +
-        '<p>曜日・行の表示、印刷レイアウトなどは設定から変更できます。</p>' +
-      '</div>' +
+      '<div class="summary-mini-total"><span>合計</span><strong>' + total + '<small>時間</small></strong></div>' +
+      '<div class="summary-mini-grid">' + (summary || '<span class="count-empty">まだ教科が入力されていません</span>') + '</div>' +
     '</section>';
 }
 
