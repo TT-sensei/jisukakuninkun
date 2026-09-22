@@ -1,4 +1,4 @@
-const WEEKLY_PLAN_VERSION = 2;
+const WEEKLY_PLAN_VERSION = 3;
 
 const SUBJECTS = [
   { id: "国語", label: "国語", color: "#e85b6b" },
@@ -95,6 +95,17 @@ function makeDateCells(weekStart) {
   return cells;
 }
 
+function makeTimetableTemplate() {
+  const template = {};
+  for (let day = 0; day <= 6; day += 1) {
+    template[day] = {};
+    for (let period = 1; period <= 8; period += 1) {
+      template[day][period] = "";
+    }
+  }
+  return template;
+}
+
 function defaultState() {
   const monday = getMonday();
   const weekStart = toISODate(monday);
@@ -132,6 +143,7 @@ function defaultState() {
       printOrientation: "portrait",
       showTimeCount: true
     },
+    timetable: makeTimetableTemplate(),
     cells: makeDateCells(weekStart)
   };
 }
@@ -149,7 +161,10 @@ function normalizeState(raw) {
       labels: { ...base.settings.labels, ...((source.settings || {}).labels || {}) },
       visible: { ...base.settings.visible, ...((source.settings || {}).visible || {}) }
     },
-    cells: { ...base.cells, ...(source.cells || {}) }
+    cells: { ...base.cells, ...(source.cells || {}) },
+    timetable: source.timetable && typeof source.timetable === "object"
+      ? JSON.parse(JSON.stringify(source.timetable))
+      : makeTimetableTemplate()
   };
 
   state.meta.weekStart = toISODate(getMonday(fromISODate(state.meta.weekStart || base.meta.weekStart)));
@@ -178,6 +193,13 @@ function normalizeState(raw) {
   }
 
   state.meta.notice = state.meta.notice || "";
+
+  for (let day = 0; day <= 6; day += 1) {
+    if (!state.timetable[day] || typeof state.timetable[day] !== "object") state.timetable[day] = {};
+    for (let period = 1; period <= 8; period += 1) {
+      state.timetable[day][period] = state.timetable[day][period] || "";
+    }
+  }
 
   state.settings.periodCount = Math.min(8, Math.max(1, Number(state.settings.periodCount) || 6));
   state.settings.printOrientation = state.settings.printOrientation === "landscape" ? "landscape" : "portrait";
@@ -251,6 +273,7 @@ window.WEEKLY_PLAN = {
   getWeekDates,
   getWeekDatesFromState,
   defaultState,
+  makeTimetableTemplate,
   normalizeState,
   createLessonCell,
   createTextCell,
