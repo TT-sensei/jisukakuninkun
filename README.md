@@ -29,6 +29,6 @@ js/file.js はJSON書き出し・読み込みを担当します。
 js/share.js は共有URLの生成・読み込みを担当します。
 js/app.js は起動と全体イベントを担当します。
 
-外部APIやバックエンドを使わない静的Webアプリとして構成しています。
+外部APIやバックエンドを使わない静的Webアプリとして構成しています。画面のトーンはEDU-KITのeditorial系設計と既存のedu-effectsの考え方を参考に、管理画面として落ち着きがありつつ、紙面らしい温度感を持たせています。
 
 [GitHub Pagesで開く](https://tt-sensei.github.io/jisukakuninkun/)
