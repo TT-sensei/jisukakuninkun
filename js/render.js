@@ -43,7 +43,7 @@ function renderLessonCell(state, dateKey, row) {
     return '<td class="plan-cell lesson-cell holiday-day ' + (cell.subject || cell.unit ? "has-content" : "is-empty") +
       '" data-date="' + escapeHTML(dateKey) + '" data-row-id="' + row.id + '" style="--subject-color:' +
       escapeHTML(subject ? subject.color : "#b8c0c5") + '">' +
-        '<div class="holiday-cell-label">' + escapeHTML(holiday.name) + '</div>' +
+        '<div class="holiday-cell-label">休日</div>' +
         '<div class="print-lesson"><div class="print-subject"></div><div class="print-unit"></div></div>' +
       '</td>';
   }
