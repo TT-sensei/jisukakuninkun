@@ -87,12 +87,9 @@ function renderWeekTable(state) {
       '<th class="row-label">' + escapeHTML(rowLabel) + "</th>" + cells + "</tr>";
   }).join("");
 
-  const counts = calculateSubjectCounts(state);
-  const countRow = state.settings.showTimeCount ? renderCountRow(state, dates, counts) : "";
-
   return '<table class="weekly-table"><thead><tr class="head-row">' +
     '<th class="corner-head"><div class="plan-mini-title">' + escapeHTML(state.meta.gradeClass || "") + "</div></th>" +
-    dayHeaders + '</tr></thead><tbody>' + body + countRow + "</tbody></table>";
+    dayHeaders + '</tr></thead><tbody>' + body + "</tbody></table>";
 }
 
 function calculateSubjectCounts(state) {
@@ -127,6 +124,9 @@ function renderPreview(state) {
   const preview = document.getElementById("planPreview");
   if (!preview) return;
 
+  const noticeLabel = state.settings.labels.notice || "お知らせ";
+  const noticeText = state.meta.notice || "";
+
   preview.innerHTML =
     '<div class="print-sheet">' +
       '<div class="plan-heading">' +
@@ -136,6 +136,12 @@ function renderPreview(state) {
         (state.meta.teacherName ? '<div class="teacher-name">' + escapeHTML(state.meta.teacherName) + "</div>" : "") +
       "</div>" +
       '<div class="table-wrap">' + renderWeekTable(state) + "</div>" +
+      (state.settings.visible.notice !== false ? 
+        '<div class="notice-footer" data-row-id="notice" data-date="__week__">' +
+          '<div class="notice-footer-label">' + escapeHTML(noticeLabel) + "</div>" +
+          '<div class="notice-footer-body">' + (noticeText ? escapeHTML(noticeText).replaceAll("\n", "<br>") : '<span class="placeholder">クリックして入力</span>') + "</div>" +
+          '<span class="notice-plus">＋</span>' +
+        "</div>" : "") +
     "</div>";
 
   document.documentElement.dataset.orientation = state.settings.printOrientation;
@@ -151,10 +157,10 @@ function renderSummary(state) {
   target.innerHTML =
     '<div class="summary-total"><span>今週の授業時数</span><strong>' + total + '<small>時間</small></strong></div>' +
     '<div class="summary-grid">' +
-    (WEEKLY_PLAN.SUBJECTS.filter(function(subject) { return counts[subject.id]; }).map(function(subject) {
+    WEEKLY_PLAN.SUBJECTS.map(function(subject) {
       return '<div class="summary-item"><span class="summary-dot" style="background:' + escapeHTML(subject.color) +
-        '"></span><span>' + escapeHTML(subject.label) + '</span><strong>' + counts[subject.id] + "</strong></div>";
-    }).join("") || '<div class="summary-empty">まだ教科が入力されていません</div>') +
+        '"></span><span>' + escapeHTML(subject.label) + '</span><strong>' + (counts[subject.id] || 0) + "</strong></div>";
+    }).join("") +
     "</div>";
 }
 
