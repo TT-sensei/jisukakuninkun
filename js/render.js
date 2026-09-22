@@ -263,6 +263,23 @@ function positionHolidayOverlays() {
   });
 }
 
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeprint", function() {
+    positionHolidayOverlays();
+  });
+  window.addEventListener("afterprint", function() {
+    positionHolidayOverlays();
+  });
+  if (window.matchMedia) {
+    const printMedia = window.matchMedia("print");
+    const handlePrintMedia = function(event) {
+      if (event.matches) positionHolidayOverlays();
+    };
+    if (printMedia.addEventListener) printMedia.addEventListener("change", handlePrintMedia);
+    else if (printMedia.addListener) printMedia.addListener(handlePrintMedia);
+  }
+}
+
 function renderSummary(state) {
   const target = document.getElementById("summaryArea");
   if (!target) return;
