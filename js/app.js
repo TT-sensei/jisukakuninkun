@@ -29,10 +29,45 @@ function updateHeader() {
   }
 }
 
+function getPreviewZoom() {
+  const raw = Number(localStorage.getItem("tt-sensei-weekly-plan-preview-zoom"));
+  return Number.isFinite(raw) && raw >= 70 && raw <= 110 ? raw : 90;
+}
+
+function applyPreviewZoom(value) {
+  const zoom = Math.min(110, Math.max(70, Number(value) || 90));
+  const preview = document.getElementById("planPreview");
+  const input = document.getElementById("previewZoom");
+  const output = document.getElementById("previewZoomValue");
+
+  if (preview) preview.style.setProperty("--preview-zoom", String(zoom / 100));
+  if (input) input.value = String(zoom);
+  if (output) output.value = zoom + "%";
+  if (output) output.textContent = zoom + "%";
+
+  localStorage.setItem("tt-sensei-weekly-plan-preview-zoom", String(zoom));
+}
+
+function bindPreviewZoom() {
+  const input = document.getElementById("previewZoom");
+  if (!input) return;
+
+  applyPreviewZoom(getPreviewZoom());
+
+  input.addEventListener("input", function(event) {
+    applyPreviewZoom(event.target.value);
+  });
+
+  input.addEventListener("change", function(event) {
+    applyPreviewZoom(event.target.value);
+  });
+}
+
 function renderApp() {
   updatePrintOrientationStyle();
   WEEKLY_RENDER.renderPreview(WEEKLY_STATE.state);
   WEEKLY_RENDER.renderSidebar(WEEKLY_STATE.state, WEEKLY_EDITOR.getSelectedCell());
+  applyPreviewZoom(getPreviewZoom());
   updateHeader();
 }
 
@@ -109,6 +144,7 @@ function startApp() {
   WEEKLY_FILE.bindFileEvents();
   WEEKLY_SHARE.bindShareEvents();
   WEEKLY_DRIVE.bindDriveEvents();
+  bindPreviewZoom();
   bindAppEvents();
   renderApp();
 }
