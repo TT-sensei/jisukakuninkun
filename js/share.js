@@ -69,13 +69,41 @@ function fallbackCopy(input, status) {
   setSaveStatus(status);
 }
 
+function mergeSharedWeekIntoLocal(shared) {
+  const local = WEEKLY_STATE.state;
+  const incoming = WEEKLY_PLAN.normalizeState(shared);
+  const mergedCells = { ...(local.cells || {}) };
+  const sharedWeekDates = WEEKLY_PLAN.getWeekDates(incoming.meta.weekStart, [0, 1, 2, 3, 4, 5, 6]);
+
+  sharedWeekDates.forEach(function(date) {
+    const key = WEEKLY_PLAN.toISODate(date);
+    mergedCells[key] = incoming.cells && incoming.cells[key]
+      ? JSON.parse(JSON.stringify(incoming.cells[key]))
+      : {};
+  });
+
+  const merged = {
+    ...local,
+    version: incoming.version,
+    meta: { ...local.meta, ...incoming.meta },
+    settings: JSON.parse(JSON.stringify(incoming.settings)),
+    cells: mergedCells
+  };
+
+  if (shared && Object.prototype.hasOwnProperty.call(shared, "calendar")) {
+    merged.calendar = JSON.parse(JSON.stringify(incoming.calendar));
+  }
+
+  return WEEKLY_PLAN.normalizeState(merged);
+}
+
 function loadShareStateFromURL() {
   const hash = window.location.hash || "";
   if (!hash.startsWith("#share=")) return false;
   try {
     const encoded = hash.slice("#share=".length);
     const shared = decodeShareState(encoded);
-    WEEKLY_STATE.replaceState(shared);
+    WEEKLY_STATE.replaceState(mergeSharedWeekIntoLocal(shared));
     history.replaceState(null, "", window.location.pathname + window.location.search);
     return true;
   } catch (error) {
