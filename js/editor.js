@@ -120,38 +120,83 @@ function clearSelectedCell() {
 }
 
 function copyUnitToSameSubject() {
-  if (!selectedCell) return;
+  if (!selectedCell || selectedCell.dateKey === "__week__") return;
+
   const row = WEEKLY_PLAN.getRowDef(selectedCell.rowId);
   if (!row || row.type !== "lesson") return;
 
-  const source = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, selectedCell.dateKey, selectedCell.rowId);
-  if (!source.subject || !source.unit) {
-    alert("教科と単元名を先に入力してください。");
+  const source = WEEKLY_PLAN.getCell(
+    WEEKLY_STATE.state,
+    selectedCell.dateKey,
+    selectedCell.rowId
+  );
+
+  if (!source.subject) {
+    alert("まず教科を選択してください。");
     return;
   }
 
-  WEEKLY_PLAN.getVisibleRows(WEEKLY_STATE.state).filter(function(item) {
-    return item.type === "lesson";
-  }).forEach(function(item) {
-    WEEKLY_PLAN.getWeekDatesFromState(WEEKLY_STATE.state).forEach(function(date) {
-      const key = WEEKLY_PLAN.toISODate(date);
-      const target = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, key, item.id);
-      if (target.subject === source.subject && !(key === selectedCell.dateKey && item.id === selectedCell.rowId)) {
-        target.unit = source.unit;
-        const el = document.querySelector('.plan-cell[data-date="' + CSS.escape(key) +
-          '"][data-row-id="' + CSS.escape(item.id) + '"]');
-        if (el) {
-          const input = el.querySelector(".inline-unit");
-          if (input) input.value = source.unit;
-          WEEKLY_RENDER.updatePrintLessonView(el, target);
-        }
+  if (!source.unit) {
+    alert("まず単元名を入力してください。");
+    return;
+  }
+
+  let copied = 0;
+  WEEKLY_PLAN.getWeekDatesFromState(WEEKLY_STATE.state).forEach(function(date) {
+    const key = WEEKLY_PLAN.toISODate(date);
+
+    for (let period = 1; period <= WEEKLY_STATE.state.settings.periodCount; period += 1) {
+      const rowId = "p" + period;
+      if (key === selectedCell.dateKey && rowId === selectedCell.rowId) continue;
+      if (WEEKLY_STATE.state.settings.visible[rowId] === false) continue;
+
+      const target = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, key, rowId);
+      if (target.subject !== source.subject) continue;
+
+      target.unit = source.unit;
+      copied += 1;
+
+      const el = document.querySelector(
+        '.plan-cell[data-date="' + CSS.escape(key) + '"][data-row-id="' +
+        CSS.escape(rowId) + '"]'
+      );
+      if (el) {
+        const input = el.querySelector(".inline-unit");
+        if (input) input.value = source.unit;
+        WEEKLY_RENDER.updatePrintLessonView(el, target);
       }
-    });
+    }
   });
 
   WEEKLY_STATE.queueSave();
   WEEKLY_RENDER.renderSummary(WEEKLY_STATE.state);
   WEEKLY_RENDER.renderSidebar(WEEKLY_STATE.state, selectedCell);
+  setSaveStatus(copied + "コマに単元名を反映しました");
+}
+
+function updateSideLessonField(field, value) {
+  if (!selectedCell || selectedCell.dateKey === "__week__") return;
+  const row = WEEKLY_PLAN.getRowDef(selectedCell.rowId);
+  if (!row || row.type !== "lesson") return;
+
+  const cell = WEEKLY_PLAN.getCell(
+    WEEKLY_STATE.state,
+    selectedCell.dateKey,
+    selectedCell.rowId
+  );
+  cell[field] = value;
+  WEEKLY_STATE.queueSave();
+
+  const el = document.querySelector(
+    '.plan-cell[data-date="' + CSS.escape(selectedCell.dateKey) + '"][data-row-id="' +
+    CSS.escape(selectedCell.rowId) + '"]'
+  );
+  if (el) {
+    const input = el.querySelector(".inline-" + (field === "unit" ? "unit" : "note"));
+    if (input) input.value = value;
+    WEEKLY_RENDER.updatePrintLessonView(el, cell);
+  }
+  WEEKLY_RENDER.renderSummary(WEEKLY_STATE.state);
 }
 
 function setWeekday(value, checked) {
@@ -269,6 +314,16 @@ function bindEditorEvents() {
 
     if (target.id === "inlineNotice") {
       updateSelectedText(target.value);
+      return;
+    }
+
+    if (target.id === "sideUnit") {
+      updateSideLessonField("unit", target.value);
+      return;
+    }
+
+    if (target.id === "sideNote") {
+      updateSideLessonField("note", target.value);
       return;
     }
 
