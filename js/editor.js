@@ -199,6 +199,106 @@ function updateSideLessonField(field, value) {
   WEEKLY_RENDER.renderSummary(WEEKLY_STATE.state);
 }
 
+
+function openAnnualModal() {
+  const modal = document.getElementById("annualModal");
+  if (!modal) return;
+  WEEKLY_RENDER.renderAnnualModal(WEEKLY_STATE.state);
+  modal.classList.remove("hidden");
+}
+
+function closeAnnualModal() {
+  const modal = document.getElementById("annualModal");
+  if (modal) modal.classList.add("hidden");
+}
+
+function addAnnualEntry() {
+  const startDate = document.getElementById("annualStartDate")?.value || "";
+  const endDate = document.getElementById("annualEndDate")?.value || "";
+  const kind = document.getElementById("annualKind")?.value || "event";
+  const name = (document.getElementById("annualName")?.value || "").trim();
+
+  if (!startDate) {
+    alert("開始日を入力してください。");
+    return;
+  }
+  if (!name) {
+    alert("名称を入力してください。");
+    return;
+  }
+  if (endDate && endDate < startDate) {
+    alert("終了日は開始日以降にしてください。");
+    return;
+  }
+
+  WEEKLY_STATE.state.calendar.annual.push(WEEKLY_PLAN.createAnnualEntry({
+    startDate,
+    endDate: endDate || startDate,
+    kind,
+    name
+  }));
+
+  WEEKLY_STATE.queueSave();
+  renderAllWithSelection();
+  WEEKLY_RENDER.renderAnnualModal(WEEKLY_STATE.state);
+  setSaveStatus("年間予定を追加しました");
+}
+
+function saveAnnualEntry(id) {
+  const entry = WEEKLY_STATE.state.calendar.annual.find(function(item) {
+    return item.id === id;
+  });
+  const card = document.querySelector('.annual-item[data-annual-id="' + CSS.escape(id) + '"]');
+  if (!entry || !card) return;
+
+  const getField = function(name) {
+    const el = card.querySelector('[data-annual-field="' + CSS.escape(name) + '"]');
+    return el ? el.value : "";
+  };
+
+  const startDate = getField("startDate");
+  const endDate = getField("endDate") || startDate;
+  const kind = getField("kind") === "holiday" ? "holiday" : "event";
+  const name = getField("name").trim();
+
+  if (!startDate || !name) {
+    alert("開始日と名称を入力してください。");
+    return;
+  }
+  if (endDate < startDate) {
+    alert("終了日は開始日以降にしてください。");
+    return;
+  }
+
+  entry.startDate = startDate;
+  entry.endDate = endDate;
+  entry.kind = kind;
+  entry.name = name;
+
+  WEEKLY_STATE.queueSave();
+  renderAllWithSelection();
+  WEEKLY_RENDER.renderAnnualModal(WEEKLY_STATE.state);
+  setSaveStatus("年間予定を更新しました");
+}
+
+function deleteAnnualEntry(id) {
+  const entry = WEEKLY_STATE.state.calendar.annual.find(function(item) {
+    return item.id === id;
+  });
+  if (!entry) return;
+
+  if (!confirm("「" + entry.name + "」を年間予定から削除します。よろしいですか？")) return;
+
+  WEEKLY_STATE.state.calendar.annual = WEEKLY_STATE.state.calendar.annual.filter(function(item) {
+    return item.id !== id;
+  });
+
+  WEEKLY_STATE.queueSave();
+  renderAllWithSelection();
+  WEEKLY_RENDER.renderAnnualModal(WEEKLY_STATE.state);
+  setSaveStatus("年間予定を削除しました");
+}
+
 function setWeekday(value, checked) {
   const next = new Set(WEEKLY_STATE.state.settings.weekdays);
   if (checked) next.add(value);
@@ -301,6 +401,29 @@ function bindEditorEvents() {
 
     if (event.target.closest("#settingsClose")) {
       closeSettingsModal();
+      return;
+    }
+
+    if (event.target.closest("#annualAdd")) {
+      addAnnualEntry();
+      return;
+    }
+
+    if (event.target.closest("#annualClose")) {
+      closeAnnualModal();
+      return;
+    }
+
+    const annualDelete = event.target.closest("[data-annual-delete]");
+    if (annualDelete) {
+      deleteAnnualEntry(annualDelete.dataset.annualDelete);
+      return;
+    }
+
+    const annualSave = event.target.closest("[data-annual-save]");
+    if (annualSave) {
+      saveAnnualEntry(annualSave.dataset.annualSave);
+      return;
     }
   });
 
