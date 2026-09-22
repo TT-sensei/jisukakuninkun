@@ -437,43 +437,67 @@ button { cursor: pointer; }
 
 .notice-footer {
   position: relative;
-  display: grid;
-  grid-template-columns: 58px minmax(0, 1fr);
-  min-height: 82px;
-  margin-top: 9px;
-  border: 1px solid var(--line-strong);
-  background: #fff;
+  display: block;
+  min-height: 190px;
+  margin-top: 18px;
+  padding: 18px 22px 22px;
+  border: 1px solid #d7c0b1;
+  border-radius: 8px 12px 8px 3px;
+  background: #fffaf1;
+  box-shadow: 0 5px 14px rgb(58 45 35 / 8%);
+  cursor: pointer;
 }
 
-.notice-footer-label {
-  display: grid;
-  place-items: center;
-  padding: 8px;
-  background: #f0f2f3;
-  border-right: 1px solid var(--line-strong);
-  font-size: 12px;
-  font-weight: 800;
+.notice-board::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 20px;
+  right: 20px;
+  height: 4px;
+  border-radius: 0 0 5px 5px;
+  background: var(--accent);
+}
+
+.notice-board-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ead8cb;
+}
+
+.notice-board-head h2 {
+  margin: 2px 0 0;
+  color: var(--accent-dark);
+  font-size: 19px;
+  line-height: 1.15;
+}
+
+.notice-board-action {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
 }
 
 .notice-footer-body {
-  padding: 9px 11px;
-  font-size: 13px;
-  line-height: 1.55;
+  min-height: 105px;
+  padding: 8px 2px;
+  font-size: 17px;
+  line-height: 1.85;
+  font-weight: 650;
   overflow-wrap: anywhere;
 }
 
-.notice-plus {
-  position: absolute;
-  top: 6px;
-  right: 7px;
-  color: #aeb6bb;
-  font-size: 13px;
-  opacity: 0;
+.notice-footer-body .placeholder {
+  color: #a89486;
+  font-weight: 550;
 }
 
-.notice-footer:hover .notice-plus,
-.notice-footer:focus-within .notice-plus {
-  opacity: 1;
+.notice-plus {
+  display: none;
 }
 
 .count-row .row-label {
@@ -1029,8 +1053,7 @@ button { cursor: pointer; }
 
   .row-lesson .plan-cell { height: 23mm; }
   .row-items .plan-cell { height: 18mm; }
-  .row-event .plan-cell,
-  .row-notice .plan-cell { min-height: 16mm; }
+  .row-event .plan-cell { min-height: 16mm; }
   .row-morning .plan-cell,
   .row-break .plan-cell,
   .row-lunch1 .plan-cell,
@@ -1058,6 +1081,33 @@ button { cursor: pointer; }
   }
 
   .time-value { font-size: 10pt; }
+
+  .notice-footer {
+    min-height: 36mm;
+    margin-top: 5mm;
+    padding: 5mm 6mm;
+    box-shadow: none;
+  }
+
+  .notice-board-head {
+    margin-bottom: 3mm;
+    padding-bottom: 2.5mm;
+  }
+
+  .notice-board-head h2 {
+    font-size: 14pt;
+  }
+
+  .notice-board-action {
+    display: none;
+  }
+
+  .notice-footer-body {
+    min-height: 22mm;
+    padding: 1mm 0;
+    font-size: 11pt;
+    line-height: 1.7;
+  }
 
   @page {
     size: A4 portrait;
