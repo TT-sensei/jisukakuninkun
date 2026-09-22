@@ -1,4 +1,20 @@
 
+function buildSharePayload() {
+  const state = WEEKLY_STATE.state;
+  const weekKeys = {};
+  WEEKLY_PLAN.getWeekDates(state.meta.weekStart, [0,1,2,3,4,5,6]).forEach(function(date) {
+    const key = WEEKLY_PLAN.toISODate(date);
+    weekKeys[key] = state.cells[key] || {};
+  });
+
+  return {
+    version: state.version,
+    meta: { ...state.meta },
+    settings: JSON.parse(JSON.stringify(state.settings)),
+    cells: weekKeys
+  };
+}
+
 function encodeShareState(state) {
   const bytes = new TextEncoder().encode(JSON.stringify(state));
   let binary = "";
@@ -17,7 +33,7 @@ function decodeShareState(encoded) {
 
 function createShareURL() {
   const url = new URL(window.location.href);
-  url.hash = "share=" + encodeShareState(WEEKLY_STATE.state);
+  url.hash = "share=" + encodeShareState(buildSharePayload());
   return url.toString();
 }
 
