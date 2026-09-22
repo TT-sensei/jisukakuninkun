@@ -117,6 +117,7 @@ function applyTimetableToWeek() {
       const rowId = "p" + period;
       const subject = template[day] && template[day][period] ? template[day][period] : "";
       if (!subject) continue;
+      if (WEEKLY_PLAN.getAnnualHolidayForDate(state, dateKey)) continue;
 
       const cell = WEEKLY_PLAN.getCell(state, dateKey, rowId);
       if (!cell.subject) {
