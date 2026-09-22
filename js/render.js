@@ -73,9 +73,10 @@ function renderTextCell(state, dateKey, row) {
   const displayText = [annualEventText, manualText].filter(Boolean).join("\n");
 
   if (holiday) {
+    // 休日名は「行事予定」の帯だけに表示し、朝・中休み・昼・持ち物などには重ねて表示しない
     const holidayText = row.id === "event"
       ? [annualEntries.filter(function(entry) { return entry.kind !== "holiday"; }).map(function(entry) { return entry.name; }).join("\n"), manualText].filter(Boolean).join("\n")
-      : holiday.name;
+      : "";
     const holidayBand = row.id === "event"
       ? '<div class="holiday-band"><div class="holiday-band-label">' + escapeHTML(holiday.name) + '</div></div>'
       : '';
