@@ -70,6 +70,9 @@ function bindAppEvents() {
   const headerSettings = document.getElementById("openSettingsHeader");
   if (headerSettings) headerSettings.addEventListener("click", openSettingsModal);
 
+  const annualButton = document.getElementById("annualButton");
+  if (annualButton) annualButton.addEventListener("click", openAnnualModal);
+
   document.getElementById("newWeekButton").addEventListener("click", clearCurrentWeek);
 
   document.getElementById("printButton").addEventListener("click", function() {
@@ -93,6 +96,7 @@ function bindAppEvents() {
       const modal = document.getElementById("shareModal");
       if (modal) modal.classList.add("hidden");
       closeSettingsModal();
+      closeAnnualModal();
     }
   });
 }
