@@ -33,14 +33,15 @@ function renderLessonCell(state, dateKey, row) {
   const holiday = WEEKLY_PLAN.getAnnualHolidayForDate(state, dateKey);
   const subject = WEEKLY_PLAN.getSubject(cell.subject);
   const subjectOptions = '<option value="">教科</option>' +
+    '<option value="__absent__"' + (cell.absent ? " selected" : "") + '>欠課</option>' +
     WEEKLY_PLAN.SUBJECTS.map(function(item) {
       return '<option value="' + escapeHTML(item.id) + '"' +
         (cell.subject === item.id ? " selected" : "") + ">" +
         escapeHTML(item.label) + "</option>";
     }).join("");
 
-  if (holiday) {
-    return '<td class="plan-cell lesson-cell holiday-day ' + (cell.subject || cell.unit ? "has-content" : "is-empty") +
+  if (holiday || cell.absent) {
+    return '<td class="plan-cell lesson-cell holiday-day ' + (cell.absent ? "absence-cell " : "") + (cell.subject || cell.unit ? "has-content" : "is-empty") +
       '" data-date="' + escapeHTML(dateKey) + '" data-row-id="' + row.id + '" style="--subject-color:' +
       escapeHTML(subject ? subject.color : "#b8c0c5") + '">' +
         '<div class="print-lesson"><div class="print-subject"></div><div class="print-unit"></div></div>' +
@@ -119,12 +120,13 @@ function updatePrintLessonView(cellEl, cell) {
   if (!cellEl) return;
   const subject = WEEKLY_PLAN.getSubject(cell.subject);
   cellEl.style.setProperty("--subject-color", subject ? subject.color : "#b8c0c5");
+  cellEl.classList.toggle("absence-cell", !!cell.absent);
   const subjectEl = cellEl.querySelector(".print-subject");
   const unitEl = cellEl.querySelector(".print-unit");
   if (subjectEl) subjectEl.textContent = subject ? subject.label : "";
   if (unitEl) unitEl.textContent = cell.unit || "";
-  cellEl.classList.toggle("has-content", !!(cell.subject || cell.unit || cell.note));
-  cellEl.classList.toggle("is-empty", !(cell.subject || cell.unit || cell.note));
+  cellEl.classList.toggle("has-content", !!(cell.subject || cell.unit || cell.note) && !cell.absent);
+  cellEl.classList.toggle("is-empty", !(cell.subject || cell.unit || cell.note) || !!cell.absent);
 }
 
 function updatePrintTextView(cellEl, text) {
@@ -195,7 +197,7 @@ function calculateSubjectCounts(state) {
       if (state.settings.visible[rowId] === false) continue;
       if (WEEKLY_PLAN.getAnnualHolidayForDate(state, key)) continue;
       const cell = WEEKLY_PLAN.getCell(state, key, rowId);
-      if (!cell || !cell.subject) continue;
+      if (!cell || !cell.subject || cell.absent) continue;
       counts[cell.subject] = (counts[cell.subject] || 0) + 1;
     }
   }
@@ -308,6 +310,7 @@ function renderSidebar(state, selected) {
   const current = selected && selected.dateKey !== "__week__" ? WEEKLY_PLAN.getCell(state, selected.dateKey, selected.rowId) : null;
   const currentRow = selected && selected.dateKey !== "__week__" ? WEEKLY_PLAN.getRowDef(selected.rowId) : null;
   const currentHoliday = selected && selected.dateKey !== "__week__" ? WEEKLY_PLAN.getAnnualHolidayForDate(state, selected.dateKey) : null;
+  const currentAbsent = selected && selected.dateKey !== "__week__" ? !!WEEKLY_PLAN.getCell(state, selected.dateKey, selected.rowId).absent : false;
   const dates = WEEKLY_PLAN.getWeekDatesFromState(state);
   const counts = calculateSubjectCounts(state);
   const total = Object.values(counts).reduce(function(sum, value) { return sum + value; }, 0);
@@ -329,6 +332,10 @@ function renderSidebar(state, selected) {
       lessonRows.forEach(function(row) {
         lessonSlots += 1;
         const cell = WEEKLY_PLAN.getCell(state, dateKey, row.id);
+        if (cell.absent) {
+          lessonSlots -= 1;
+          return;
+        }
         if (cell.subject) filledSlots += 1;
         if (cell.note) noteCount += 1;
       });
@@ -362,18 +369,19 @@ function renderSidebar(state, selected) {
     const date = WEEKLY_PLAN.fromISODate(selected.dateKey);
     const dayLabel = formatJapaneseDate(date) + "・" + currentRow.period + "時間目";
     const buttons = WEEKLY_PLAN.SUBJECTS.map(function(subject) {
-      const active = current.subject === subject.id;
+      const active = !currentAbsent && current.subject === subject.id;
       return '<button type="button" class="subject-quick' + (active ? " active" : "") +
         '" data-subject-quick="' + escapeHTML(subject.id) + '" style="--subject-color:' + escapeHTML(subject.color) + '">' +
         escapeHTML(subject.label) + '</button>';
-    }).join("");
+    }).join("") +
+      '<button type="button" class="subject-quick subject-quick-absence' + (currentAbsent ? " active" : "") + '" data-subject-quick="__absent__">欠課</button>';
     detail =
       '<div class="selected-cell-label">' + escapeHTML(dayLabel) + '</div>' +
       '<div class="subject-quick-grid">' + buttons + '</div>' +
       '<label class="field right-detail-field"><span>単元名</span><input id="sideUnit" type="text" value="' +
-      escapeHTML(current.unit || "") + '" placeholder="選択中の単元名"></label>' +
+      escapeHTML(currentAbsent ? "" : (current.unit || "")) + '" placeholder="選択中の単元名"' + (currentAbsent ? " disabled" : "") + '></label>' +
       '<label class="field right-detail-field"><span>メモ（プレビュー・印刷には表示しません）</span><textarea id="sideNote" rows="4" placeholder="この授業についてのメモ">' +
-      escapeHTML(current.note || "") + '</textarea></label>' +
+      escapeHTML(currentAbsent ? "" : (current.note || "")) + '"' + (currentAbsent ? " disabled" : "") + '></textarea></label>' +
       '<label class="test-highlight-toggle"><input id="testHighlight" type="checkbox"><span>このコマを強調表示</span></label>' +
       '<div class="quick-tool-actions"><button type="button" class="secondary-button" id="copyUnitWeek">この単元名を同じ教科のコマへ反映</button>' +
       '<button type="button" class="ghost-button block-button" id="clearCell">このコマをクリア</button></div>';
