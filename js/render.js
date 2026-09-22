@@ -461,13 +461,7 @@ function renderSettingsModal(state) {
         (state.settings.printOrientation === "portrait" ? " checked" : "") + '><span>A4 縦</span></label>' +
         '<label><input type="radio" name="printOrientation" value="landscape"' +
         (state.settings.printOrientation === "landscape" ? " checked" : "") + '><span>A4 横</span></label></div></section>' +
-    '<section class="settings-section drive-link-section">' +
-      '<div class="section-heading"><div><span class="eyebrow">GOOGLE DRIVE</span><h3>Google Drive</h3></div><span class="mini-help">JSONの保管場所</span></div>' +
-      '<p class="drive-explain">週案データは今までどおりJSONで書き出せます。書き出したJSONをGoogle Driveへ保存しておけば、別の端末からダウンロードして読み込めます。</p>' +
-      '<label class="field"><span>Google DriveのフォルダURL</span><input id="driveFolderUrl" type="url" value="' + escapeHTML(getDriveFolderUrl()) + '" placeholder="https://drive.google.com/drive/folders/…" autocomplete="off"></label>' +
-      '<div class="drive-actions"><button type="button" class="secondary-button" id="openDriveFolder">Google Driveを開く</button></div>' +
-      '<div class="drive-note">このアプリからDriveへ直接保存するのではなく、「書き出し」→Driveへ保存→別端末でダウンロード→「読み込み」という安全で簡単な運用です。</div>' +
-    '</section>';
+
 }
 
 
