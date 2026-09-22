@@ -27,6 +27,7 @@
 
     <div class="header-actions">
       <span class="status-dot"><span id="saveStatus">保存済み</span></span>
+      <button id="annualButton" class="header-button" type="button">年間予定</button>
       <button id="timetableButton" class="header-button" type="button">時間割登録</button>
       <button id="openSettingsHeader" class="header-button" type="button">設定</button>
       <button id="newWeekButton" class="header-button" type="button">週を空にする</button>
@@ -61,6 +62,10 @@
 
   <div id="settingsModal" class="settings-modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
     <div id="settingsContent" class="settings-dialog"></div>
+  </div>
+
+  <div id="annualModal" class="settings-modal hidden" role="dialog" aria-modal="true" aria-labelledby="annualTitle">
+    <div id="annualContent" class="settings-dialog"></div>
   </div>
 
   <div id="shareModal" class="share-modal hidden" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
