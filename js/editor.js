@@ -409,6 +409,17 @@ function bindEditorEvents() {
       return;
     }
 
+    if (event.target.closest("#dashboardExport")) {
+      if (window.WEEKLY_FILE && WEEKLY_FILE.exportWeeklyPlan) WEEKLY_FILE.exportWeeklyPlan();
+      return;
+    }
+
+    if (event.target.closest("#dashboardImport")) {
+      const input = document.getElementById("importInput");
+      if (input) input.click();
+      return;
+    }
+
     if (event.target.closest("#settingsClose")) {
       closeSettingsModal();
       return;
