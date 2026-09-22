@@ -2088,3 +2088,61 @@ button { cursor: pointer; }
 .test-highlight{outline:3px solid #1d4ed8!important;outline-offset:-3px;box-shadow:inset 0 0 0 2px rgba(29,78,216,.16),0 0 0 3px rgba(29,78,216,.12);position:relative;z-index:3}
 .test-highlight-toggle{display:flex;align-items:center;gap:7px;margin:8px 0 2px;padding:8px 10px;border:1px solid var(--line,#d8dde2);border-radius:10px;background:#f7f9fb;font-size:12px;font-weight:700;cursor:pointer}
 .test-highlight-toggle input{width:17px;height:17px;accent-color:#1d4ed8}
+
+/* Shared weekly-plan view -------------------------------------------- */
+body.share-view {
+  background: #fff;
+}
+
+body.share-view .app-header,
+body.share-view .preview-top,
+body.share-view .settings-panel,
+body.share-view .timetable-modal,
+body.share-view .settings-modal,
+body.share-view .share-modal {
+  display: none !important;
+}
+
+body.share-view .workspace {
+  display: block;
+  min-height: 100vh;
+  padding: 0;
+}
+
+body.share-view .preview-panel {
+  width: 100%;
+  min-height: 100vh;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  background: #fff;
+}
+
+body.share-view #planPreview {
+  --preview-zoom: 1 !important;
+  width: 100%;
+  padding: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+body.share-view .plan-preview-wrap {
+  transform: none !important;
+}
+
+body.share-view .plan-cell {
+  cursor: default !important;
+}
+
+body.share-view .plan-cell.selected-cell,
+body.share-view .plan-cell.test-highlight {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+@media print {
+  body.share-view .preview-panel {
+    min-height: auto;
+  }
+}
