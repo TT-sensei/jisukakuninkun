@@ -252,9 +252,13 @@ function getCell(state, dateKey, rowId) {
   const existing = day[rowId];
   if (existing) return existing;
 
-  if (row && row.type === "lesson") return createLessonCell();
-  if (row && row.type === "time") return createTimeCell();
-  return createTextCell();
+  let created;
+  if (row && row.type === "lesson") created = createLessonCell();
+  else if (row && row.type === "time") created = createTimeCell();
+  else created = createTextCell();
+
+  day[rowId] = created;
+  return created;
 }
 
 function setCell(state, dateKey, rowId, cell) {
