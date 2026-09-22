@@ -108,7 +108,7 @@ function startApp() {
   WEEKLY_TIMETABLE.bindTimetableEvents();
   WEEKLY_FILE.bindFileEvents();
   WEEKLY_SHARE.bindShareEvents();
-  WEEKLY_CLOUD.bindCloudEvents();
+  WEEKLY_DRIVE.bindDriveEvents();
   bindAppEvents();
   renderApp();
 }
