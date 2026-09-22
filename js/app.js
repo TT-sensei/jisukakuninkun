@@ -96,6 +96,7 @@ function bindAppEvents() {
 function startApp() {
   WEEKLY_SHARE.loadShareStateFromURL();
   WEEKLY_EDITOR.bindEditorEvents();
+  WEEKLY_TIMETABLE.bindTimetableEvents();
   WEEKLY_FILE.bindFileEvents();
   WEEKLY_SHARE.bindShareEvents();
   bindAppEvents();
