@@ -38,7 +38,7 @@ function decodeShareState(encoded) {
 
 function createShareURL() {
   const url = new URL(window.location.href);
-  url.hash = "share=" + encodeShareState(buildSharePayload());
+  url.hash = "share-view=" + encodeShareState(buildSharePayload());
   return url.toString();
 }
 
@@ -99,13 +99,17 @@ function mergeSharedWeekIntoLocal(shared) {
 
 function loadShareStateFromURL() {
   const hash = window.location.hash || "";
-  if (!hash.startsWith("#share=")) return false;
+  const isViewShare = hash.startsWith("#share-view=");
+  const isLegacyShare = hash.startsWith("#share=");
+  if (!isViewShare && !isLegacyShare) return false;
   try {
-    const encoded = hash.slice("#share=".length);
+    const prefix = isViewShare ? "#share-view=" : "#share=";
+    const encoded = hash.slice(prefix.length);
     const shared = decodeShareState(encoded);
     WEEKLY_STATE.replaceState(mergeSharedWeekIntoLocal(shared));
     history.replaceState(null, "", window.location.pathname + window.location.search);
-    return true;
+    if (isViewShare) document.body.classList.add("share-view");
+    return isViewShare ? "view" : true;
   } catch (error) {
     console.warn("共有データを読み込めませんでした", error);
     return false;
