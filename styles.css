@@ -1556,6 +1556,20 @@ button { cursor: pointer; }
   min-height: 32px;
   font-size: 13px;
 }
+.annual-derived {
+  margin: 1px 3px 2px;
+  padding: 3px 5px;
+  border-left: 3px solid #b8c8cf;
+  color: #657078;
+  background: #f5f7f8;
+  font-size: 10px;
+  line-height: 1.35;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.annual-derived + .inline-text {
+  min-height: 30px;
+}
 .inline-lesson {
   gap: 4px;
 }
