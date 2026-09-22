@@ -2084,3 +2084,7 @@ button { cursor: pointer; }
 .dashboard-data-actions button{min-width:0;padding-inline:7px}
 .dashboard-drive-note{margin-top:6px;font-size:9px}
 @media(max-width:700px){.dashboard-data-actions{grid-template-columns:1fr}}
+
+.test-highlight{outline:3px solid #1d4ed8!important;outline-offset:-3px;box-shadow:inset 0 0 0 2px rgba(29,78,216,.16),0 0 0 3px rgba(29,78,216,.12);position:relative;z-index:3}
+.test-highlight-toggle{display:flex;align-items:center;gap:7px;margin:8px 0 2px;padding:8px 10px;border:1px solid var(--line,#d8dde2);border-radius:10px;background:#f7f9fb;font-size:12px;font-weight:700;cursor:pointer}
+.test-highlight-toggle input{width:17px;height:17px;accent-color:#1d4ed8}
