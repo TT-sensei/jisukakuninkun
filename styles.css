@@ -1497,6 +1497,18 @@ button { cursor: pointer; }
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgb(169 95 67 / 12%);
 }
+
+/* 画面では入力欄だけを表示。印刷用本文との二重表示を防ぐ */
+@media screen {
+  .notice-footer .inline-notice {
+    display: block !important;
+  }
+
+  .notice-footer .notice-footer-body {
+    display: none !important;
+  }
+}
+
 .notice-footer-body {
   display: none;
 }
