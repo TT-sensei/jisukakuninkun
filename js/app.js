@@ -67,6 +67,9 @@ function bindAppEvents() {
 
   document.getElementById("todayButton").addEventListener("click", goToToday);
 
+  const headerSettings = document.getElementById("openSettingsHeader");
+  if (headerSettings) headerSettings.addEventListener("click", openSettingsModal);
+
   document.getElementById("newWeekButton").addEventListener("click", clearCurrentWeek);
 
   document.getElementById("printButton").addEventListener("click", function() {
@@ -89,6 +92,7 @@ function bindAppEvents() {
     if (event.key === "Escape") {
       const modal = document.getElementById("shareModal");
       if (modal) modal.classList.add("hidden");
+      closeSettingsModal();
     }
   });
 }
