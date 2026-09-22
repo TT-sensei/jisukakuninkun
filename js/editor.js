@@ -96,7 +96,7 @@ function updateInlineSubject(element) {
     cell.subject = element.value;
   }
   WEEKLY_STATE.queueSave();
-  WEEKLY_RENDER.renderAllWithSelection();
+  renderAllWithSelection();
   WEEKLY_RENDER.renderSummary(WEEKLY_STATE.state);
 }
 
@@ -129,7 +129,7 @@ function updateSelectedLessonField(field, value) {
   }
   WEEKLY_RENDER.renderSummary(WEEKLY_STATE.state);
   WEEKLY_RENDER.renderSidebar(WEEKLY_STATE.state, selectedCell);
-  if (field === "subject") WEEKLY_RENDER.renderAllWithSelection();
+  if (field === "subject") renderAllWithSelection();
 }
 
 function updateSelectedText(value) {
