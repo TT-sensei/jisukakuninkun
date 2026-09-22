@@ -2146,3 +2146,49 @@ body.share-view .plan-cell.test-highlight {
     min-height: auto;
   }
 }
+
+
+/* 欠課 -------------------------------------------------------------- */
+.absence-cell {
+  background: repeating-linear-gradient(
+    -45deg,
+    #ffffff 0,
+    #ffffff 7px,
+    #ededed 7px,
+    #ededed 10px
+  ) !important;
+}
+
+.absence-cell .inline-edit {
+  display: none !important;
+}
+
+.absence-cell.plan-cell {
+  cursor: default;
+}
+
+.subject-quick-absence {
+  border-color: #c9ced2;
+  background: #f1f3f4;
+  color: #555d63;
+}
+
+.subject-quick-absence.active {
+  border-color: #7a8389;
+  background: #e3e6e8;
+  color: #2f3539;
+}
+
+@media print {
+  .absence-cell {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background: repeating-linear-gradient(
+      -45deg,
+      #ffffff 0,
+      #ffffff 6px,
+      #e7e7e7 6px,
+      #e7e7e7 9px
+    ) !important;
+  }
+}
