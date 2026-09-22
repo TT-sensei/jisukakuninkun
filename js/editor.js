@@ -5,6 +5,12 @@ function getSelectedCell() {
   return selectedCell;
 }
 
+function clearSelection() {
+  selectedCell = null;
+  WEEKLY_RENDER.renderPreview(WEEKLY_STATE.state);
+  WEEKLY_RENDER.renderSidebar(WEEKLY_STATE.state, null);
+}
+
 function selectCell(dateKey, rowId) {
   selectedCell = { dateKey, rowId };
   WEEKLY_RENDER.renderSidebar(WEEKLY_STATE.state, selectedCell);
@@ -108,6 +114,7 @@ function setPeriodCount(value) {
   WEEKLY_STATE.state.settings.periodCount = count;
   for (let period = 1; period <= 8; period += 1) {
     if (period > count) WEEKLY_STATE.state.settings.visible["p" + period] = false;
+    else WEEKLY_STATE.state.settings.visible["p" + period] = true;
   }
   WEEKLY_STATE.queueSave();
   renderAllWithSelection();
@@ -192,6 +199,7 @@ function bindEditorEvents() {
     if (target.name === "printOrientation") {
       WEEKLY_STATE.state.settings.printOrientation = target.value;
       WEEKLY_STATE.queueSave();
+      updatePrintOrientationStyle();
       WEEKLY_RENDER.renderPreview(WEEKLY_STATE.state);
       highlightSelectedCell();
       return;
@@ -209,5 +217,6 @@ function bindEditorEvents() {
 window.WEEKLY_EDITOR = {
   bindEditorEvents,
   getSelectedCell,
+  clearSelection,
   renderAllWithSelection
 };
