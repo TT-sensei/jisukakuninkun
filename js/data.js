@@ -1,4 +1,4 @@
-const WEEKLY_PLAN_VERSION = 4;
+const WEEKLY_PLAN_VERSION = 5;
 
 const SUBJECTS = [
   { id: "国語", label: "国語", color: "#e85b6b" },
@@ -214,7 +214,7 @@ function normalizeState(raw) {
     }
   }
 
-  state.meta.notice = state.meta.notice || "";
+  state.meta.notice = state.meta.notice || "";\n\n  // 欠課フラグを正規化（旧データは通常授業として扱う）\n  Object.keys(state.cells).forEach(function(dateKey) {\n    const day = state.cells[dateKey];\n    if (!day || typeof day !== "object") return;\n    Object.keys(day).forEach(function(rowId) {\n      const row = getRowDef(rowId);\n      if (row && row.type === "lesson" && day[rowId] && typeof day[rowId] === "object") {\n        day[rowId].absent = !!day[rowId].absent;\n      }\n    });\n  });
 
   for (let day = 0; day <= 6; day += 1) {
     if (!state.timetable[day] || typeof state.timetable[day] !== "object") state.timetable[day] = {};
@@ -234,8 +234,8 @@ function normalizeState(raw) {
   return state;
 }
 
-function createLessonCell(subject = "", unit = "", note = "") {
-  return { kind: "lesson", subject, unit, note };
+function createLessonCell(subject = "", unit = "", note = "", absent = false) {
+  return { kind: "lesson", subject, unit, note, absent: !!absent };
 }
 
 function createTextCell(text = "") {
