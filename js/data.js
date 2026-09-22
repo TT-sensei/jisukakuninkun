@@ -161,15 +161,20 @@ function normalizeState(raw) {
 
   if (!state.settings.weekdays.length) state.settings.weekdays = [1,2,3,4,5];
 
-  // v1の「昼」「お知らせ」を、新しい週案構成へ引き継ぐ
+  // 旧形式の「昼」「お知らせ」を新しい構成へ引き継ぐ
   if (state.cells && source.version !== WEEKLY_PLAN_VERSION) {
-    Object.keys(state.cells).forEach(function(dateKey) {
+    const oldNotices = [];
+    Object.keys(state.cells).sort().forEach(function(dateKey) {
       const day = state.cells[dateKey] || {};
       if (day.lunch && !day.lunch1) day.lunch1 = day.lunch;
+      if (day.notice && day.notice.text) oldNotices.push(day.notice.text);
       delete day.lunch;
       delete day.notice;
       state.cells[dateKey] = day;
     });
+    if (!state.meta.notice && oldNotices.length) {
+      state.meta.notice = oldNotices.join("\n");
+    }
   }
 
   state.meta.notice = state.meta.notice || "";
