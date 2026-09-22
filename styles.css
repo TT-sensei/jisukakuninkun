@@ -1820,7 +1820,7 @@ button { cursor: pointer; }
   }
 
   .holiday-band {
-    --holiday-band-height: 170mm !important;
+    --holiday-band-height: 175mm !important;
     height: var(--holiday-band-height);
     background: rgb(246 246 246 / 92%);
     border-color: #777;
