@@ -294,7 +294,9 @@ button { cursor: pointer; }
 .row-notice .plan-cell { min-height: 60px; }
 
 .row-morning .plan-cell,
-.row-lunch .plan-cell { min-height: 46px; }
+.row-break .plan-cell,
+.row-lunch1 .plan-cell,
+.row-lunch2 .plan-cell { min-height: 46px; }
 
 .row-lesson .plan-cell { height: 84px; }
 
@@ -394,6 +396,47 @@ button { cursor: pointer; }
 
 .plan-cell:hover .cell-plus,
 .plan-cell.selected-cell .cell-plus {
+  opacity: 1;
+}
+
+.notice-footer {
+  position: relative;
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  min-height: 82px;
+  margin-top: 9px;
+  border: 1px solid var(--line-strong);
+  background: #fff;
+}
+
+.notice-footer-label {
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  background: #f0f2f3;
+  border-right: 1px solid var(--line-strong);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.notice-footer-body {
+  padding: 9px 11px;
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.notice-plus {
+  position: absolute;
+  top: 6px;
+  right: 7px;
+  color: #aeb6bb;
+  font-size: 13px;
+  opacity: 0;
+}
+
+.notice-footer:hover .notice-plus,
+.notice-footer:focus-within .notice-plus {
   opacity: 1;
 }
 
@@ -949,7 +992,9 @@ button { cursor: pointer; }
   .row-event .plan-cell,
   .row-notice .plan-cell { min-height: 16mm; }
   .row-morning .plan-cell,
-  .row-lunch .plan-cell { min-height: 11mm; }
+  .row-break .plan-cell,
+  .row-lunch1 .plan-cell,
+  .row-lunch2 .plan-cell { min-height: 11mm; }
   .row-time .plan-cell { height: 11mm; }
 
   .subject-pill {
@@ -958,6 +1003,7 @@ button { cursor: pointer; }
   }
 
   .cell-plus,
+  .notice-plus,
   .placeholder {
     display: none;
   }
