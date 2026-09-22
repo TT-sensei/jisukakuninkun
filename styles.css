@@ -1542,3 +1542,69 @@ button { cursor: pointer; }
     font-weight: 800;
   }
 }
+
+
+/* Final direct-entry tuning ------------------------------------------ */
+.inline-subject {
+  min-height: 40px;
+  padding: 5px 8px;
+  font-size: 15px;
+  line-height: 1.2;
+  font-weight: 850;
+}
+.inline-unit {
+  min-height: 32px;
+  font-size: 13px;
+}
+.inline-lesson {
+  gap: 4px;
+}
+.right-detail-field {
+  margin-top: 10px;
+}
+.summary-mini-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.summary-mini-total span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+.summary-mini-total strong {
+  font-size: 24px;
+  line-height: 1;
+}
+.summary-mini-total small {
+  margin-left: 4px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.summary-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+.summary-mini-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 30px;
+  padding: 4px 7px;
+  border: 1px solid #e0e4e7;
+  border-radius: 7px;
+  background: #fbfcfc;
+  font-size: 10px;
+}
+.summary-mini-item strong {
+  font-size: 12px;
+}
+@media (max-width: 700px) {
+  .summary-mini-grid {
+    grid-template-columns: 1fr;
+  }
+}
