@@ -252,12 +252,13 @@ button { cursor: pointer; }
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 35%);
 }
 
-.plan-preview-wrap .print-sheet {
+/* 表示倍率は週案表だけでなく、お知らせを含むプレビュー全体に適用 */
+#planPreview {
   zoom: var(--preview-zoom, .9);
 }
 
 @media print {
-  .plan-preview-wrap .print-sheet {
+  #planPreview {
     zoom: 1 !important;
   }
 }
