@@ -83,7 +83,7 @@ function renderWeekTable(state) {
       if (row.type === "time") return renderTimeCell(state, key, row);
       return renderTextCell(state, key, row);
     }).join("");
-    return '<tr class="plan-row row-' + row.type + '" data-row-id="' + row.id + '">' +
+    return '<tr class="plan-row row-' + row.type + " row-' + row.id + '" data-row-id="' + row.id + '">' +
       '<th class="row-label">' + escapeHTML(rowLabel) + "</th>" + cells + "</tr>";
   }).join("");
 
