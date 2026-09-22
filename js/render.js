@@ -30,6 +30,7 @@ function subjectPill(subjectId) {
 
 function renderLessonCell(state, dateKey, row) {
   const cell = WEEKLY_PLAN.getCell(state, dateKey, row.id);
+  const holiday = WEEKLY_PLAN.getAnnualHolidayForDate(state, dateKey);
   const subject = WEEKLY_PLAN.getSubject(cell.subject);
   const subjectOptions = '<option value="">教科</option>' +
     WEEKLY_PLAN.SUBJECTS.map(function(item) {
@@ -37,6 +38,15 @@ function renderLessonCell(state, dateKey, row) {
         (cell.subject === item.id ? " selected" : "") + ">" +
         escapeHTML(item.label) + "</option>";
     }).join("");
+
+  if (holiday) {
+    return '<td class="plan-cell lesson-cell holiday-day ' + (cell.subject || cell.unit ? "has-content" : "is-empty") +
+      '" data-date="' + escapeHTML(dateKey) + '" data-row-id="' + row.id + '" style="--subject-color:' +
+      escapeHTML(subject ? subject.color : "#b8c0c5") + '">' +
+        '<div class="holiday-cell-label">' + escapeHTML(holiday.name) + '</div>' +
+        '<div class="print-lesson"><div class="print-subject"></div><div class="print-unit"></div></div>' +
+      '</td>';
+  }
 
   return '<td class="plan-cell lesson-cell ' + (cell.subject || cell.unit ? "has-content" : "is-empty") +
     '" data-date="' + escapeHTML(dateKey) + '" data-row-id="' + row.id + '" style="--subject-color:' +
@@ -57,7 +67,19 @@ function renderLessonCell(state, dateKey, row) {
 
 function renderTextCell(state, dateKey, row) {
   const cell = WEEKLY_PLAN.getCell(state, dateKey, row.id);
-  const text = cell.text || "";
+  const holiday = WEEKLY_PLAN.getAnnualHolidayForDate(state, dateKey);
+  const annualEventText = row.id === "event" ? WEEKLY_PLAN.getAnnualEventTextForDate(state, dateKey) : "";
+  const text = cell.text || annualEventText || "";
+
+  if (holiday) {
+    const holidayText = annualEventText || holiday.name;
+    return '<td class="plan-cell text-cell holiday-day ' + (holidayText ? "has-content" : "is-empty") +
+      '" data-date="' + escapeHTML(dateKey) + '" data-row-id="' + row.id + '">' +
+        '<div class="holiday-cell-label">' + escapeHTML(holidayText) + '</div>' +
+        '<div class="print-text">' + escapeHTML(holidayText).replaceAll("\n", "<br>") + '</div>' +
+      '</td>';
+  }
+
   return '<td class="plan-cell text-cell ' + (text ? "has-content" : "is-empty") +
     '" data-date="' + escapeHTML(dateKey) + '" data-row-id="' + row.id + '">' +
       '<input class="inline-edit inline-text" data-cell-field="text" type="text" value="' + escapeHTML(text) +
@@ -68,7 +90,14 @@ function renderTextCell(state, dateKey, row) {
 
 function renderTimeCell(state, dateKey, row) {
   const cell = WEEKLY_PLAN.getCell(state, dateKey, row.id);
+  const holiday = WEEKLY_PLAN.getAnnualHolidayForDate(state, dateKey);
   const time = cell.time || "";
+
+  if (holiday) {
+    return '<td class="plan-cell time-cell holiday-day is-empty" data-date="' + escapeHTML(dateKey) + '" data-row-id="' + row.id + '">' +
+      '<div class="holiday-cell-label">休日</div><div class="print-time"></div></td>';
+  }
+
   return '<td class="plan-cell time-cell ' + (time ? "has-content" : "is-empty") +
     '" data-date="' + escapeHTML(dateKey) + '" data-row-id="' + row.id + '">' +
       '<input class="inline-edit inline-time" data-cell-field="time" type="time" value="' + escapeHTML(time) +
@@ -91,10 +120,15 @@ function updatePrintLessonView(cellEl, cell) {
 
 function updatePrintTextView(cellEl, text) {
   if (!cellEl) return;
+  const dateKey = cellEl.dataset.date;
+  const rowId = cellEl.dataset.rowId;
+  const derived = rowId === "event" ? WEEKLY_PLAN.getAnnualEventTextForDate(WEEKLY_STATE.state, dateKey) : "";
+  const holiday = WEEKLY_PLAN.getAnnualHolidayForDate(WEEKLY_STATE.state, dateKey);
+  const displayText = text || derived || (holiday ? holiday.name : "");
   const out = cellEl.querySelector(".print-text");
-  if (out) out.innerHTML = text ? escapeHTML(text).replaceAll("\n", "<br>") : "";
-  cellEl.classList.toggle("has-content", !!text);
-  cellEl.classList.toggle("is-empty", !text);
+  if (out) out.innerHTML = displayText ? escapeHTML(displayText).replaceAll("\n", "<br>") : "";
+  cellEl.classList.toggle("has-content", !!displayText);
+  cellEl.classList.toggle("is-empty", !displayText);
 }
 
 function updatePrintTimeView(cellEl, time) {
@@ -110,9 +144,13 @@ function renderWeekTable(state) {
   const rows = WEEKLY_PLAN.getVisibleRows(state);
   const label = state.settings.labels;
   const dayHeaders = dates.map(function(date) {
+    const key = WEEKLY_PLAN.toISODate(date);
+    const holiday = WEEKLY_PLAN.getAnnualHolidayForDate(state, key);
     const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
-    return '<th class="date-head"><div class="date-number">' + date.getDate() +
-      '</div><div class="date-week">' + weekdays[date.getDay()] + "</div></th>";
+    return '<th class="date-head ' + (holiday ? "holiday-day holiday-date-head" : "") + '">' +
+      '<div class="date-number">' + date.getDate() + '</div><div class="date-week">' + weekdays[date.getDay()] + "</div>" +
+      (holiday ? '<div class="holiday-head-label">' + escapeHTML(holiday.name) + '</div>' : '') +
+      '</th>';
   }).join("");
 
   const body = rows.map(function(row) {
@@ -140,6 +178,7 @@ function calculateSubjectCounts(state) {
     for (let period = 1; period <= state.settings.periodCount; period += 1) {
       const rowId = "p" + period;
       if (state.settings.visible[rowId] === false) continue;
+      if (WEEKLY_PLAN.getAnnualHolidayForDate(state, key)) continue;
       const cell = WEEKLY_PLAN.getCell(state, key, rowId);
       if (!cell || !cell.subject) continue;
       counts[cell.subject] = (counts[cell.subject] || 0) + 1;
@@ -322,8 +361,59 @@ function renderSettingsModal(state) {
         (state.settings.printOrientation === "landscape" ? " checked" : "") + '><span>A4 横</span></label></div></section>';
 }
 
+
+function renderAnnualModal(state) {
+  const target = document.getElementById("annualContent");
+  if (!target) return;
+
+  const annual = state.calendar && Array.isArray(state.calendar.annual)
+    ? state.calendar.annual.slice().sort(function(a, b) {
+        return String(a.startDate || "").localeCompare(String(b.startDate || "")) ||
+          String(a.name || "").localeCompare(String(b.name || ""), "ja");
+      })
+    : [];
+
+  const items = annual.length
+    ? annual.map(function(entry) {
+        const kindLabel = entry.kind === "holiday" ? "祝日" : "行事";
+        const end = entry.endDate && entry.endDate !== entry.startDate ? entry.endDate : "";
+        return '<div class="annual-item" data-annual-id="' + escapeHTML(entry.id) + '">' +
+          '<div class="annual-item-head"><span class="annual-kind ' + (entry.kind === "holiday" ? "holiday" : "event") + '">' + kindLabel + '</span>' +
+            '<button type="button" class="ghost-button" data-annual-delete="' + escapeHTML(entry.id) + '">削除</button></div>' +
+          '<div class="annual-item-grid">' +
+            '<label class="field"><span>開始日</span><input type="date" data-annual-field="startDate" data-annual-id="' + escapeHTML(entry.id) + '" value="' + escapeHTML(entry.startDate) + '"></label>' +
+            '<label class="field"><span>終了日</span><input type="date" data-annual-field="endDate" data-annual-id="' + escapeHTML(entry.id) + '" value="' + escapeHTML(end) + '" placeholder="' + escapeHTML(entry.startDate) + '"></label>' +
+            '<label class="field"><span>種類</span><select data-annual-field="kind" data-annual-id="' + escapeHTML(entry.id) + '">' +
+              '<option value="event"' + (entry.kind === "event" ? " selected" : "") + '>行事</option>' +
+              '<option value="holiday"' + (entry.kind === "holiday" ? " selected" : "") + '>祝日</option>' +
+            '</select></label>' +
+            '<label class="field annual-name-field"><span>名称</span><input type="text" data-annual-field="name" data-annual-id="' + escapeHTML(entry.id) + '" value="' + escapeHTML(entry.name) + '"></label>' +
+          '</div>' +
+          '<div class="annual-item-foot"><button type="button" class="secondary-button" data-annual-save="' + escapeHTML(entry.id) + '">変更を保存</button></div>' +
+        '</div>';
+      }).join("")
+    : '<div class="annual-empty">まだ年間予定がありません。</div>';
+
+  const today = WEEKLY_PLAN.toISODate(new Date());
+
+  target.innerHTML =
+    '<div class="settings-modal-head"><div><span class="eyebrow">CALENDAR</span><h2 id="annualTitle">年間予定</h2><p>行事や祝日を登録すると、該当週の「行事予定」へ自動で表示します。祝日はその日の全コマを休日表示にします。</p></div>' +
+      '<button type="button" class="ghost-button" id="annualClose">閉じる</button></div>' +
+    '<section class="settings-section annual-add-section"><div class="section-heading"><div><span class="eyebrow">ADD</span><h3>年間予定を追加</h3></div><span class="mini-help">1日だけなら終了日は空欄でOK</span></div>' +
+      '<div class="annual-form-grid">' +
+        '<label class="field"><span>開始日</span><input id="annualStartDate" type="date" value="' + escapeHTML(today) + '"></label>' +
+        '<label class="field"><span>終了日</span><input id="annualEndDate" type="date"></label>' +
+        '<label class="field"><span>種類</span><select id="annualKind"><option value="event">行事</option><option value="holiday">祝日</option></select></label>' +
+        '<label class="field annual-name-field"><span>名称</span><input id="annualName" type="text" placeholder="例：運動会"></label>' +
+      '</div>' +
+      '<button type="button" class="header-button primary" id="annualAdd">年間予定に追加</button></section>' +
+    '<section class="settings-section"><div class="section-heading"><div><span class="eyebrow">LIST</span><h3>登録済みの年間予定</h3></div><span class="mini-help">' + annual.length + '件</span></div>' +
+      '<div class="annual-list">' + items + '</div></section>';
+}
+
 window.WEEKLY_RENDER = {
   renderPreview,
+  renderAnnualModal,
   renderSidebar,
   renderSummary,
   calculateSubjectCounts,
