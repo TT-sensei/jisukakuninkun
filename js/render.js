@@ -232,6 +232,15 @@ function renderSelectedEditor(state, selected) {
       '<p>左の週案で教科・単元名・行事・持ち物などのマスを押すと、ここから詳しく入力できます。</p></div></section>';
   }
 
+  if (selected.rowId === "notice" && selected.dateKey === "__week__") {
+    const noticeLabel = state.settings.labels.notice || "お知らせ";
+    return '<section class="selection-card"><div class="selection-card-head"><div><span class="eyebrow">WEEK NOTE</span><h2>' +
+      escapeHTML(noticeLabel) + "を入力</h2></div><button type=\"button\" class=\"ghost-button\" id=\"clearCell\">クリア</button></div>" +
+      '<label class="field"><span>' + escapeHTML(noticeLabel) + '</span><textarea id="cellText" rows="7" placeholder="週全体のお知らせ・連絡事項を入力">' +
+      escapeHTML(state.meta.notice || "") + "</textarea></label>" +
+      '<p class="input-help">週案の一番下に、横いっぱいのお知らせ欄として表示されます。</p></section>';
+  }
+
   const row = WEEKLY_PLAN.getRowDef(selected.rowId);
   const date = WEEKLY_PLAN.fromISODate(selected.dateKey);
   const weekdays = ["日","月","火","水","木","金","土"];
