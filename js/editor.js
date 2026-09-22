@@ -215,17 +215,18 @@ function renderSettingsModalSafe() {
 
 function bindEditorEvents() {
   document.addEventListener("click", function(event) {
-    const cell = event.target.closest(".plan-cell");
-    if (cell) {
-      selectCell(cell.dataset.date, cell.dataset.rowId);
+    const notice = event.target.closest(".notice-footer");
+    if (notice) {
+      selectCell("__week__", "notice");
+      if (event.target.closest(".inline-notice")) return;
+      const input = notice.querySelector(".inline-notice");
+      if (input) input.focus();
       return;
     }
 
-    const notice = event.target.closest(".notice-footer");
-    if (notice && !event.target.closest(".inline-notice")) {
-      selectCell("__week__", "notice");
-      const input = notice.querySelector(".inline-notice");
-      if (input) input.focus();
+    const cell = event.target.closest(".plan-cell");
+    if (cell) {
+      selectCell(cell.dataset.date, cell.dataset.rowId);
       return;
     }
 
