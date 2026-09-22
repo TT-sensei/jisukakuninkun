@@ -61,6 +61,14 @@ function updateInlineCellField(element) {
   if (!field) return;
 
   cell[field] = element.value;
+  if (field === "subject" && element.value === "__absent__") {
+    cell.absent = true;
+    cell.subject = "";
+    cell.unit = "";
+    cell.note = "";
+  } else if (field === "subject") {
+    cell.absent = false;
+  }
   WEEKLY_STATE.queueSave();
 
   const row = WEEKLY_PLAN.getRowDef(rowId);
@@ -78,7 +86,15 @@ function updateInlineSubject(element) {
   if (!cellEl) return;
 
   const cell = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, cellEl.dataset.date, cellEl.dataset.rowId);
-  cell.subject = element.value;
+  if (element.value === "__absent__") {
+    cell.absent = true;
+    cell.subject = "";
+    cell.unit = "";
+    cell.note = "";
+  } else {
+    cell.absent = false;
+    cell.subject = element.value;
+  }
   WEEKLY_STATE.queueSave();
   WEEKLY_RENDER.updatePrintLessonView(cellEl, cell);
   WEEKLY_RENDER.renderSummary(WEEKLY_STATE.state);
@@ -90,7 +106,19 @@ function updateSelectedLessonField(field, value) {
   const row = WEEKLY_PLAN.getRowDef(selectedCell.rowId);
   if (!row || row.type !== "lesson") return;
   const cell = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, selectedCell.dateKey, selectedCell.rowId);
-  cell[field] = value;
+  if (field === "subject") {
+    if (value === "__absent__") {
+      cell.absent = true;
+      cell.subject = "";
+      cell.unit = "";
+      cell.note = "";
+    } else {
+      cell.absent = false;
+      cell.subject = value;
+    }
+  } else {
+    cell[field] = value;
+  }
   WEEKLY_STATE.queueSave();
 
   const cellEl = document.querySelector('.plan-cell[data-date="' + CSS.escape(selectedCell.dateKey) +
