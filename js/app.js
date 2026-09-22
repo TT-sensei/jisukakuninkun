@@ -1,4 +1,15 @@
 
+function updatePrintOrientationStyle() {
+  let style = document.getElementById("printOrientationStyle");
+  if (!style) {
+    style = document.createElement("style");
+    style.id = "printOrientationStyle";
+    document.head.appendChild(style);
+  }
+  const orientation = WEEKLY_STATE.state.settings.printOrientation === "landscape" ? "landscape" : "portrait";
+  style.textContent = "@media print { @page { size: A4 " + orientation + "; margin: 7mm; } }";
+}
+
 function currentWeekLabel() {
   const start = WEEKLY_PLAN.fromISODate(WEEKLY_STATE.state.meta.weekStart);
   const dates = WEEKLY_PLAN.getWeekDatesFromState(WEEKLY_STATE.state);
@@ -19,6 +30,7 @@ function updateHeader() {
 }
 
 function renderApp() {
+  updatePrintOrientationStyle();
   WEEKLY_RENDER.renderPreview(WEEKLY_STATE.state);
   WEEKLY_RENDER.renderSidebar(WEEKLY_STATE.state, WEEKLY_EDITOR.getSelectedCell());
   updateHeader();
