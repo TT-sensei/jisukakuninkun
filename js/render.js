@@ -68,13 +68,14 @@ function renderLessonCell(state, dateKey, row) {
 function renderTextCell(state, dateKey, row) {
   const cell = WEEKLY_PLAN.getCell(state, dateKey, row.id);
   const holiday = WEEKLY_PLAN.getAnnualHolidayForDate(state, dateKey);
-  const annualEventText = row.id === "event" ? WEEKLY_PLAN.getAnnualEventTextForDate(state, dateKey) : "";
+  const annualEntries = row.id === "event" ? WEEKLY_PLAN.getAnnualEntriesForDate(state, dateKey) : [];
+  const annualEventText = annualEntries.map(function(entry) { return entry.name; }).join("\n");
   const manualText = cell.text || "";
   const displayText = [annualEventText, manualText].filter(Boolean).join("\n");
 
   if (holiday) {
     const holidayText = row.id === "event"
-      ? manualText
+      ? [annualEntries.filter(function(entry) { return entry.kind !== "holiday"; }).map(function(entry) { return entry.name; }).join("\n"), manualText].filter(Boolean).join("\n")
       : holiday.name;
     const holidayBand = row.id === "event"
       ? '<div class="holiday-band"><div class="holiday-band-label">' + escapeHTML(holiday.name) + '</div></div>'
@@ -159,7 +160,6 @@ function renderWeekTable(state) {
     const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
     return '<th class="date-head ' + (holiday ? "holiday-day holiday-date-head" : "") + '">' +
       '<div class="date-number">' + date.getDate() + '</div><div class="date-week">' + weekdays[date.getDay()] + "</div>" +
-      (holiday ? '<div class="holiday-head-label">' + escapeHTML(holiday.name) + '</div>' : '') +
       '</th>';
   }).join("");
 
