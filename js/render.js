@@ -69,22 +69,26 @@ function renderTextCell(state, dateKey, row) {
   const cell = WEEKLY_PLAN.getCell(state, dateKey, row.id);
   const holiday = WEEKLY_PLAN.getAnnualHolidayForDate(state, dateKey);
   const annualEventText = row.id === "event" ? WEEKLY_PLAN.getAnnualEventTextForDate(state, dateKey) : "";
-  const text = cell.text || annualEventText || "";
+  const manualText = cell.text || "";
+  const displayText = [annualEventText, manualText].filter(Boolean).join("\n");
 
   if (holiday) {
-    const holidayText = annualEventText || holiday.name;
+    const holidayText = row.id === "event"
+      ? displayText || holiday.name
+      : holiday.name;
     return '<td class="plan-cell text-cell holiday-day ' + (holidayText ? "has-content" : "is-empty") +
       '" data-date="' + escapeHTML(dateKey) + '" data-row-id="' + row.id + '">' +
-        '<div class="holiday-cell-label">' + escapeHTML(holidayText) + '</div>' +
+        '<div class="holiday-cell-label">' + escapeHTML(holidayText).replaceAll("\n", "<br>") + '</div>' +
         '<div class="print-text">' + escapeHTML(holidayText).replaceAll("\n", "<br>") + '</div>' +
       '</td>';
   }
 
-  return '<td class="plan-cell text-cell ' + (text ? "has-content" : "is-empty") +
+  return '<td class="plan-cell text-cell ' + (displayText ? "has-content" : "is-empty") +
     '" data-date="' + escapeHTML(dateKey) + '" data-row-id="' + row.id + '">' +
-      '<input class="inline-edit inline-text" data-cell-field="text" type="text" value="' + escapeHTML(text) +
-        '" placeholder="クリックして入力" aria-label="' + escapeHTML(row.defaultLabel) + '">' +
-      '<div class="print-text">' + (text ? escapeHTML(text).replaceAll("\n", "<br>") : "") + '</div>' +
+      (annualEventText ? '<div class="annual-derived">年間予定：' + escapeHTML(annualEventText).replaceAll("\n", "<br>") + '</div>' : '') +
+      '<input class="inline-edit inline-text" data-cell-field="text" type="text" value="' + escapeHTML(manualText) +
+        '" placeholder="' + (annualEventText ? "今週の行事を追加" : "クリックして入力") + '" aria-label="' + escapeHTML(row.defaultLabel) + '">' +
+      '<div class="print-text">' + (displayText ? escapeHTML(displayText).replaceAll("\n", "<br>") : "") + '</div>' +
     '</td>';
 }
 
@@ -124,7 +128,9 @@ function updatePrintTextView(cellEl, text) {
   const rowId = cellEl.dataset.rowId;
   const derived = rowId === "event" ? WEEKLY_PLAN.getAnnualEventTextForDate(WEEKLY_STATE.state, dateKey) : "";
   const holiday = WEEKLY_PLAN.getAnnualHolidayForDate(WEEKLY_STATE.state, dateKey);
-  const displayText = text || derived || (holiday ? holiday.name : "");
+  const displayText = rowId === "event"
+    ? [derived, text].filter(Boolean).join("\n")
+    : (text || (holiday ? holiday.name : ""));
   const out = cellEl.querySelector(".print-text");
   if (out) out.innerHTML = displayText ? escapeHTML(displayText).replaceAll("\n", "<br>") : "";
   cellEl.classList.toggle("has-content", !!displayText);
