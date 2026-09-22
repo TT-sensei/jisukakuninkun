@@ -1,4 +1,4 @@
-const WEEKLY_PLAN_VERSION = 3;
+const WEEKLY_PLAN_VERSION = 4;
 
 const SUBJECTS = [
   { id: "国語", label: "国語", color: "#e85b6b" },
@@ -144,6 +144,9 @@ function defaultState() {
       showTimeCount: true
     },
     timetable: makeTimetableTemplate(),
+    calendar: {
+      annual: []
+    },
     cells: makeDateCells(weekStart)
   };
 }
@@ -164,7 +167,22 @@ function normalizeState(raw) {
     cells: { ...base.cells, ...(source.cells || {}) },
     timetable: source.timetable && typeof source.timetable === "object"
       ? JSON.parse(JSON.stringify(source.timetable))
-      : makeTimetableTemplate()
+      : makeTimetableTemplate(),
+    calendar: {
+      annual: Array.isArray(source.calendar && source.calendar.annual)
+        ? source.calendar.annual.map(function(entry) {
+            return {
+              id: String(entry.id || ""),
+              startDate: toISODate(entry.startDate || entry.date || state.meta.weekStart),
+              endDate: toISODate(entry.endDate || entry.startDate || entry.date || state.meta.weekStart),
+              kind: entry.kind === "holiday" ? "holiday" : "event",
+              name: String(entry.name || entry.eventName || "").trim()
+            };
+          }).filter(function(entry) {
+            return entry.name && entry.startDate;
+          })
+        : []
+    }
   };
 
   state.meta.weekStart = toISODate(getMonday(fromISODate(state.meta.weekStart || base.meta.weekStart)));
@@ -262,6 +280,54 @@ function getSubject(subjectId) {
   return SUBJECTS.find(subject => subject.id === subjectId) || null;
 }
 
+function normalizeAnnualDate(value) {
+  const text = String(value || "");
+  return /^\\d{4}-\\d{2}-\\d{2}$/.test(text) ? text : "";
+}
+
+function getAnnualEntriesForDate(state, dateKey) {
+  const target = normalizeAnnualDate(dateKey);
+  if (!target) return [];
+  const annual = state.calendar && Array.isArray(state.calendar.annual) ? state.calendar.annual : [];
+  return annual
+    .filter(function(entry) {
+      const start = normalizeAnnualDate(entry.startDate);
+      const end = normalizeAnnualDate(entry.endDate || entry.startDate);
+      return start && end && start <= target && target <= end;
+    })
+    .sort(function(a, b) {
+      if (a.kind !== b.kind) return a.kind === "holiday" ? -1 : 1;
+      return String(a.name).localeCompare(String(b.name), "ja");
+    });
+}
+
+function getAnnualHolidayForDate(state, dateKey) {
+  return getAnnualEntriesForDate(state, dateKey).find(function(entry) {
+    return entry.kind === "holiday";
+  }) || null;
+}
+
+function getAnnualEventTextForDate(state, dateKey) {
+  return getAnnualEntriesForDate(state, dateKey)
+    .map(function(entry) {
+      return entry.kind === "holiday" ? entry.name + "（祝日）" : entry.name;
+    })
+    .filter(Boolean)
+    .join("\\n");
+}
+
+function createAnnualEntry(data = {}) {
+  const startDate = normalizeAnnualDate(data.startDate || data.date);
+  const endDate = normalizeAnnualDate(data.endDate || startDate) || startDate;
+  return {
+    id: String(data.id || ("annual-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8))),
+    startDate,
+    endDate: endDate < startDate ? startDate : endDate,
+    kind: data.kind === "holiday" ? "holiday" : "event",
+    name: String(data.name || "").trim()
+  };
+}
+
 window.WEEKLY_PLAN = {
   WEEKLY_PLAN_VERSION,
   SUBJECTS,
@@ -283,5 +349,9 @@ window.WEEKLY_PLAN = {
   setCell,
   removeCell,
   getVisibleRows,
-  getSubject
+  getSubject,
+  getAnnualEntriesForDate,
+  getAnnualHolidayForDate,
+  getAnnualEventTextForDate,
+  createAnnualEntry
 };
