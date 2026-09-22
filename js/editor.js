@@ -454,7 +454,6 @@ function bindEditorEvents() {
     if (target.id === "metaSchoolName") return updateMetaField("metaSchoolName", "schoolName");
     if (target.id === "metaTeacherName") return updateMetaField("metaTeacherName", "teacherName");
     if (target.id === "metaTitle") return updateMetaField("metaTitle", "title");
-    if (target.dataset.rowLabel) return setRowLabel(target.dataset.rowLabel, target.value);
   });
 
   document.addEventListener("change", function(event) {
@@ -474,6 +473,11 @@ function bindEditorEvents() {
 
     if (target.dataset.weekday !== undefined) {
       setWeekday(Number(target.dataset.weekday), target.checked);
+      return;
+    }
+
+    if (target.dataset.rowLabel) {
+      setRowLabel(target.dataset.rowLabel, target.value);
       return;
     }
 
