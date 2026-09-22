@@ -82,7 +82,7 @@ function getWeekDates(weekStart, weekdays = [1, 2, 3, 4, 5]) {
 }
 
 function getWeekDatesFromState(state) {
-  return getWeekDates(base.meta.weekStart, state.settings.weekdays);
+  return getWeekDates(state.meta.weekStart, state.settings.weekdays);
 }
 
 function makeDateCells(weekStart) {
