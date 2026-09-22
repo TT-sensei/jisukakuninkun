@@ -108,8 +108,9 @@ function loadShareStateFromURL() {
     const shared = decodeShareState(encoded);
     WEEKLY_STATE.replaceState(mergeSharedWeekIntoLocal(shared));
     history.replaceState(null, "", window.location.pathname + window.location.search);
-    if (isViewShare) document.body.classList.add("share-view");
-    return isViewShare ? "view" : true;
+    // 旧形式 #share= も閲覧専用として扱い、過去に発行した共有リンクも編集できないようにする。
+    document.body.classList.add("share-view");
+    return "view";
   } catch (error) {
     console.warn("共有データを読み込めませんでした", error);
     return false;
