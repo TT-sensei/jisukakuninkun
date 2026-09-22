@@ -1,4 +1,4 @@
-const WEEKLY_PLAN_VERSION = 1;
+const WEEKLY_PLAN_VERSION = 2;
 
 const SUBJECTS = [
   { id: "国語", label: "国語", color: "#e85b6b" },
@@ -25,9 +25,11 @@ const ROW_DEFS = [
   { id: "morning", type: "text", labelKey: "morning", defaultLabel: "朝" },
   { id: "p1", type: "lesson", period: 1, labelKey: null, defaultLabel: "1" },
   { id: "p2", type: "lesson", period: 2, labelKey: null, defaultLabel: "2" },
+  { id: "break", type: "text", labelKey: "break", defaultLabel: "中休み" },
   { id: "p3", type: "lesson", period: 3, labelKey: null, defaultLabel: "3" },
   { id: "p4", type: "lesson", period: 4, labelKey: null, defaultLabel: "4" },
-  { id: "lunch", type: "text", labelKey: "lunch", defaultLabel: "昼" },
+  { id: "lunch1", type: "text", labelKey: "lunch1", defaultLabel: "昼①" },
+  { id: "lunch2", type: "text", labelKey: "lunch2", defaultLabel: "昼②" },
   { id: "p5", type: "lesson", period: 5, labelKey: null, defaultLabel: "5" },
   { id: "p6", type: "lesson", period: 6, labelKey: null, defaultLabel: "6" },
   { id: "p7", type: "lesson", period: 7, labelKey: null, defaultLabel: "7" },
@@ -40,7 +42,9 @@ const ROW_DEFS = [
 const DEFAULT_LABELS = {
   event: "行事予定",
   morning: "朝",
-  lunch: "昼",
+  break: "中休み",
+  lunch1: "昼①",
+  lunch2: "昼②",
   items: "持ち物",
   leaving: "下校",
   notice: "お知らせ"
@@ -110,7 +114,9 @@ function defaultState() {
       visible: {
         event: true,
         morning: true,
-        lunch: true,
+        break: true,
+        lunch1: true,
+        lunch2: true,
         p1: true,
         p2: true,
         p3: true,
@@ -154,6 +160,20 @@ function normalizeState(raw) {
     .sort((a, b) => a - b);
 
   if (!state.settings.weekdays.length) state.settings.weekdays = [1,2,3,4,5];
+
+  // v1の「昼」「お知らせ」を、新しい週案構成へ引き継ぐ
+  if (state.cells && source.version !== WEEKLY_PLAN_VERSION) {
+    Object.keys(state.cells).forEach(function(dateKey) {
+      const day = state.cells[dateKey] || {};
+      if (day.lunch && !day.lunch1) day.lunch1 = day.lunch;
+      delete day.lunch;
+      delete day.notice;
+      state.cells[dateKey] = day;
+    });
+  }
+
+  state.meta.notice = state.meta.notice || "";
+
   state.settings.periodCount = Math.min(8, Math.max(1, Number(state.settings.periodCount) || 6));
   state.settings.printOrientation = state.settings.printOrientation === "landscape" ? "landscape" : "portrait";
 
@@ -203,6 +223,7 @@ function removeCell(state, dateKey, rowId) {
 
 function getVisibleRows(state) {
   return ROW_DEFS.filter(row => {
+    if (row.id === "notice") return false;
     if (row.type === "lesson") {
       return row.period <= state.settings.periodCount && state.settings.visible[row.id] !== false;
     }
