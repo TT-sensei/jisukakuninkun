@@ -1,0 +1,90 @@
+
+function encodeShareState(state) {
+  const bytes = new TextEncoder().encode(JSON.stringify(state));
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
+}
+
+function decodeShareState(encoded) {
+  let base64 = encoded.replaceAll("-", "+").replaceAll("_", "/");
+  while (base64.length % 4) base64 += "=";
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+function createShareURL() {
+  const url = new URL(window.location.href);
+  url.hash = "share=" + encodeShareState(WEEKLY_STATE.state);
+  return url.toString();
+}
+
+function copyShareURL() {
+  const url = createShareURL();
+  const input = document.getElementById("shareURL");
+  if (input) input.value = url;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function() {
+      setSaveStatus("共有URLをコピーしました");
+    }).catch(function() {
+      fallbackCopy(input, "共有URLを表示しました");
+    });
+  } else {
+    fallbackCopy(input, "共有URLを表示しました");
+  }
+
+  const modal = document.getElementById("shareModal");
+  if (modal) modal.classList.remove("hidden");
+}
+
+function fallbackCopy(input, status) {
+  if (!input) return;
+  input.focus();
+  input.select();
+  try { document.execCommand("copy"); } catch (error) {}
+  setSaveStatus(status);
+}
+
+function loadShareStateFromURL() {
+  const hash = window.location.hash || "";
+  if (!hash.startsWith("#share=")) return false;
+  try {
+    const encoded = hash.slice("#share=".length);
+    const shared = decodeShareState(encoded);
+    WEEKLY_STATE.replaceState(shared);
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+    return true;
+  } catch (error) {
+    console.warn("共有データを読み込めませんでした", error);
+    return false;
+  }
+}
+
+function bindShareEvents() {
+  const shareButton = document.getElementById("shareButton");
+  if (shareButton) shareButton.addEventListener("click", copyShareURL);
+
+  const shareClose = document.getElementById("shareClose");
+  if (shareClose) shareClose.addEventListener("click", function() {
+    document.getElementById("shareModal").classList.add("hidden");
+  });
+
+  const shareCopy = document.getElementById("shareCopy");
+  if (shareCopy) shareCopy.addEventListener("click", function() {
+    const input = document.getElementById("shareURL");
+    fallbackCopy(input, "共有URLをコピーしました");
+  });
+
+  const shareURL = document.getElementById("shareURL");
+  if (shareURL) shareURL.addEventListener("focus", function() { shareURL.select(); });
+}
+
+window.WEEKLY_SHARE = {
+  createShareURL,
+  copyShareURL,
+  loadShareStateFromURL,
+  bindShareEvents
+};
