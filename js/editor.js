@@ -18,14 +18,22 @@ function selectCell(dateKey, rowId) {
 }
 
 function highlightSelectedCell() {
-  document.querySelectorAll(".plan-cell.selected-cell").forEach(function(el) {
-    el.classList.remove("selected-cell");
+  document.querySelectorAll(".plan-cell.selected-cell, .plan-cell.test-highlight").forEach(function(el) {
+    el.classList.remove("selected-cell", "test-highlight");
   });
   if (!selectedCell || selectedCell.dateKey === "__week__") return;
   const selector = '.plan-cell[data-date="' + CSS.escape(selectedCell.dateKey) +
     '"][data-row-id="' + CSS.escape(selectedCell.rowId) + '"]';
   const cell = document.querySelector(selector);
   if (cell) cell.classList.add("selected-cell");
+}
+
+function applyTestHighlight(checked) {
+  if (!selectedCell || selectedCell.dateKey === "__week__") return;
+  const selector = '.plan-cell[data-date="' + CSS.escape(selectedCell.dateKey) +
+    '"][data-row-id="' + CSS.escape(selectedCell.rowId) + '"]';
+  const cell = document.querySelector(selector);
+  if (cell) cell.classList.toggle("test-highlight", !!checked);
 }
 
 function renderAllWithSelection() {
@@ -386,6 +394,12 @@ function bindEditorEvents() {
 
     if (event.target.closest("#clearCell")) {
       clearSelectedCell();
+      return;
+    }
+
+    const testHighlight = event.target.closest("#testHighlight");
+    if (testHighlight) {
+      applyTestHighlight(testHighlight.checked);
       return;
     }
 
