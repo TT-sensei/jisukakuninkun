@@ -50,7 +50,7 @@ function renderLessonCell(state, dateKey, row) {
       '<div class="print-lesson" aria-hidden="true">' +
         '<div class="print-subject">' + escapeHTML(subject ? subject.label : "") + '</div>' +
         '<div class="print-unit">' + escapeHTML(cell.unit || "") + '</div>' +
-        '<div class="print-note" hidden>' + escapeHTML(cell.note || "") + "</div>" +
+        '<div class="print-note">' + escapeHTML(cell.note || "") + "</div>" +
       '</div>' +
     '</td>';
 }
