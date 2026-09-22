@@ -48,7 +48,7 @@ function setSaveStatus(text) {
 }
 
 function shiftWeek(delta) {
-  const monday = WEEKLY_PLAN.getMonday(WEEKLY_STATE.state.meta.weekStart);
+  const monday = WEEKLY_PLAN.getMonday(WEEKLY_PLAN.fromISODate(WEEKLY_STATE.state.meta.weekStart));
   monday.setDate(monday.getDate() + delta * 7);
   appState.meta.weekStart = WEEKLY_PLAN.toISODate(monday);
   queueSave();
