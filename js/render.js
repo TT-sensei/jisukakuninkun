@@ -137,11 +137,13 @@ function renderPreview(state) {
       "</div>" +
       '<div class="table-wrap">' + renderWeekTable(state) + "</div>" +
       (state.settings.visible.notice !== false ? 
-        '<div class="notice-footer" data-row-id="notice" data-date="__week__">' +
-          '<div class="notice-footer-label">' + escapeHTML(noticeLabel) + "</div>" +
-          '<div class="notice-footer-body">' + (noticeText ? escapeHTML(noticeText).replaceAll("\n", "<br>") : '<span class="placeholder">クリックして入力</span>') + "</div>" +
-          '<span class="notice-plus">＋</span>' +
-        "</div>" : "") +
+        '<section class="notice-footer notice-board edu-paper-note" data-row-id="notice" data-date="__week__">' +
+          '<div class="notice-board-head">' +
+            '<div><span class="eyebrow">WEEK NOTE</span><h2>' + escapeHTML(noticeLabel) + "</h2></div>" +
+            '<span class="notice-board-action">クリックして入力</span>' +
+          "</div>" +
+          '<div class="notice-footer-body">' + (noticeText ? escapeHTML(noticeText).replaceAll("\n", "<br>") : '<span class="placeholder">今週の連絡、準備、提出物、保護者へのお知らせなどを入力</span>') + "</div>" +
+        "</section>" : "") +
     "</div>";
 
   document.documentElement.dataset.orientation = state.settings.printOrientation;
