@@ -21,7 +21,7 @@ function highlightSelectedCell() {
   document.querySelectorAll(".plan-cell.selected-cell").forEach(function(el) {
     el.classList.remove("selected-cell");
   });
-  if (!selectedCell) return;
+  if (!selectedCell || selectedCell.dateKey === "__week__") return;
   const selector = '.plan-cell[data-date="' + CSS.escape(selectedCell.dateKey) +
     '"][data-row-id="' + CSS.escape(selectedCell.rowId) + '"]';
   const cell = document.querySelector(selector);
@@ -40,66 +40,118 @@ function updateMetaField(id, field) {
   WEEKLY_STATE.state.meta[field] = element.value;
   WEEKLY_STATE.queueSave();
   WEEKLY_RENDER.renderPreview(WEEKLY_STATE.state);
-  highlightSelectedCell();
+}
+
+function updateInlineCellField(element) {
+  const cellEl = element.closest(".plan-cell");
+  if (!cellEl) return;
+
+  const rowId = cellEl.dataset.rowId;
+  const dateKey = cellEl.dataset.date;
+  const cell = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, dateKey, rowId);
+  const field = element.dataset.cellField;
+  if (!field) return;
+
+  cell[field] = element.value;
+  WEEKLY_STATE.queueSave();
+
+  const row = WEEKLY_PLAN.getRowDef(rowId);
+  if (row && row.type === "lesson") {
+    WEEKLY_RENDER.updatePrintLessonView(cellEl, cell);
+  } else if (field === "text") {
+    WEEKLY_RENDER.updatePrintTextView(cellEl, element.value);
+  } else if (field === "time") {
+    WEEKLY_RENDER.updatePrintTimeView(cellEl, element.value);
+  }
+}
+
+function updateInlineSubject(element) {
+  const cellEl = element.closest(".plan-cell");
+  if (!cellEl) return;
+
+  const cell = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, cellEl.dataset.date, cellEl.dataset.rowId);
+  cell.subject = element.value;
+  WEEKLY_STATE.queueSave();
+  WEEKLY_RENDER.updatePrintLessonView(cellEl, cell);
+  WEEKLY_RENDER.renderSummary(WEEKLY_STATE.state);
+  if (selectedCell) WEEKLY_RENDER.renderSidebar(WEEKLY_STATE.state, selectedCell);
 }
 
 function updateSelectedLessonField(field, value) {
   if (!selectedCell) return;
+  const row = WEEKLY_PLAN.getRowDef(selectedCell.rowId);
+  if (!row || row.type !== "lesson") return;
   const cell = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, selectedCell.dateKey, selectedCell.rowId);
   cell[field] = value;
   WEEKLY_STATE.queueSave();
-  WEEKLY_RENDER.renderPreview(WEEKLY_STATE.state);
-  highlightSelectedCell();
+
+  const cellEl = document.querySelector('.plan-cell[data-date="' + CSS.escape(selectedCell.dateKey) +
+    '"][data-row-id="' + CSS.escape(selectedCell.rowId) + '"]');
+  if (cellEl) {
+    const control = cellEl.querySelector('[data-cell-field="' + CSS.escape(field) + '"]');
+    if (control) control.value = value;
+    WEEKLY_RENDER.updatePrintLessonView(cellEl, cell);
+  }
+  WEEKLY_RENDER.renderSummary(WEEKLY_STATE.state);
+  WEEKLY_RENDER.renderSidebar(WEEKLY_STATE.state, selectedCell);
 }
 
 function updateSelectedText(value) {
   if (!selectedCell) return;
   if (selectedCell.rowId === "notice" && selectedCell.dateKey === "__week__") {
     WEEKLY_STATE.state.meta.notice = value;
-  } else {
-    const row = WEEKLY_PLAN.getRowDef(selectedCell.rowId);
-    const cell = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, selectedCell.dateKey, selectedCell.rowId);
-    if (row && row.type === "time") cell.time = value;
-    else cell.text = value;
+    const out = document.querySelector(".notice-footer-body");
+    if (out) out.innerHTML = value ? escapeHTML(value).replaceAll("\n", "<br>") : "";
   }
   WEEKLY_STATE.queueSave();
-  WEEKLY_RENDER.renderPreview(WEEKLY_STATE.state);
-  highlightSelectedCell();
 }
 
 function clearSelectedCell() {
   if (!selectedCell) return;
+
   if (selectedCell.rowId === "notice" && selectedCell.dateKey === "__week__") {
     WEEKLY_STATE.state.meta.notice = "";
   } else {
     WEEKLY_PLAN.removeCell(WEEKLY_STATE.state, selectedCell.dateKey, selectedCell.rowId);
   }
+
   WEEKLY_STATE.queueSave();
   renderAllWithSelection();
 }
 
 function copyUnitToSameSubject() {
   if (!selectedCell) return;
+  const row = WEEKLY_PLAN.getRowDef(selectedCell.rowId);
+  if (!row || row.type !== "lesson") return;
+
   const source = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, selectedCell.dateKey, selectedCell.rowId);
   if (!source.subject || !source.unit) {
     alert("教科と単元名を先に入力してください。");
     return;
   }
 
-  WEEKLY_PLAN.getVisibleRows(WEEKLY_STATE.state).filter(function(row) {
-    return row.type === "lesson";
-  }).forEach(function(row) {
+  WEEKLY_PLAN.getVisibleRows(WEEKLY_STATE.state).filter(function(item) {
+    return item.type === "lesson";
+  }).forEach(function(item) {
     WEEKLY_PLAN.getWeekDatesFromState(WEEKLY_STATE.state).forEach(function(date) {
       const key = WEEKLY_PLAN.toISODate(date);
-      const target = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, key, row.id);
-      if (target.subject === source.subject && !(key === selectedCell.dateKey && row.id === selectedCell.rowId)) {
+      const target = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, key, item.id);
+      if (target.subject === source.subject && !(key === selectedCell.dateKey && item.id === selectedCell.rowId)) {
         target.unit = source.unit;
+        const el = document.querySelector('.plan-cell[data-date="' + CSS.escape(key) +
+          '"][data-row-id="' + CSS.escape(item.id) + '"]');
+        if (el) {
+          const input = el.querySelector(".inline-unit");
+          if (input) input.value = source.unit;
+          WEEKLY_RENDER.updatePrintLessonView(el, target);
+        }
       }
     });
   });
 
   WEEKLY_STATE.queueSave();
-  renderAllWithSelection();
+  WEEKLY_RENDER.renderSummary(WEEKLY_STATE.state);
+  WEEKLY_RENDER.renderSidebar(WEEKLY_STATE.state, selectedCell);
 }
 
 function setWeekday(value, checked) {
@@ -109,36 +161,56 @@ function setWeekday(value, checked) {
 
   if (!next.size) {
     alert("少なくとも1つの曜日を表示してください。");
-    return renderAllWithSelection();
+    return renderSettingsModalSafe();
   }
 
   WEEKLY_STATE.state.settings.weekdays = Array.from(next).sort(function(a, b) { return a - b; });
   WEEKLY_STATE.queueSave();
   renderAllWithSelection();
+  renderSettingsModalSafe();
 }
 
 function setPeriodCount(value) {
   const count = Math.min(8, Math.max(1, Number(value) || 6));
   WEEKLY_STATE.state.settings.periodCount = count;
   for (let period = 1; period <= 8; period += 1) {
-    if (period > count) WEEKLY_STATE.state.settings.visible["p" + period] = false;
-    else WEEKLY_STATE.state.settings.visible["p" + period] = true;
+    WEEKLY_STATE.state.settings.visible["p" + period] = period <= count;
   }
   WEEKLY_STATE.queueSave();
   renderAllWithSelection();
+  renderSettingsModalSafe();
 }
 
 function setRowVisible(rowId, checked) {
   WEEKLY_STATE.state.settings.visible[rowId] = checked;
   WEEKLY_STATE.queueSave();
   renderAllWithSelection();
+  renderSettingsModalSafe();
 }
 
 function setRowLabel(labelKey, value) {
   WEEKLY_STATE.state.settings.labels[labelKey] = value || WEEKLY_PLAN.DEFAULT_LABELS[labelKey];
   WEEKLY_STATE.queueSave();
-  WEEKLY_RENDER.renderPreview(WEEKLY_STATE.state);
-  highlightSelectedCell();
+  renderAllWithSelection();
+  renderSettingsModalSafe();
+}
+
+function openSettingsModal() {
+  const modal = document.getElementById("settingsModal");
+  if (!modal) return;
+  WEEKLY_RENDER.renderSettingsModal(WEEKLY_STATE.state);
+  modal.classList.remove("hidden");
+}
+
+function closeSettingsModal() {
+  const modal = document.getElementById("settingsModal");
+  if (modal) modal.classList.add("hidden");
+}
+
+function renderSettingsModalSafe() {
+  const modal = document.getElementById("settingsModal");
+  if (!modal || modal.classList.contains("hidden")) return;
+  WEEKLY_RENDER.renderSettingsModal(WEEKLY_STATE.state);
 }
 
 function bindEditorEvents() {
@@ -150,8 +222,19 @@ function bindEditorEvents() {
     }
 
     const notice = event.target.closest(".notice-footer");
-    if (notice) {
+    if (notice && !event.target.closest(".inline-notice")) {
       selectCell("__week__", "notice");
+      const input = notice.querySelector(".inline-notice");
+      if (input) input.focus();
+      return;
+    }
+
+    const subjectQuick = event.target.closest("[data-subject-quick]");
+    if (subjectQuick && selectedCell) {
+      const row = WEEKLY_PLAN.getRowDef(selectedCell.rowId);
+      if (row && row.type === "lesson") {
+        updateSelectedLessonField("subject", subjectQuick.dataset.subjectQuick);
+      }
       return;
     }
 
@@ -165,38 +248,48 @@ function bindEditorEvents() {
       return;
     }
 
-    const quickButton = event.target.closest("[data-period-count]");
-    if (quickButton) {
-      setPeriodCount(quickButton.dataset.periodCount);
+    if (event.target.closest("#openSettings")) {
+      openSettingsModal();
+      return;
+    }
+
+    if (event.target.closest("#settingsClose")) {
+      closeSettingsModal();
     }
   });
 
   document.addEventListener("input", function(event) {
     const target = event.target;
 
+    if (target.matches(".inline-edit")) {
+      updateInlineCellField(target);
+      return;
+    }
+
+    if (target.id === "inlineNotice") {
+      updateSelectedText(target.value);
+      return;
+    }
+
     if (target.id === "metaGradeClass") return updateMetaField("metaGradeClass", "gradeClass");
     if (target.id === "metaSchoolName") return updateMetaField("metaSchoolName", "schoolName");
     if (target.id === "metaTeacherName") return updateMetaField("metaTeacherName", "teacherName");
     if (target.id === "metaTitle") return updateMetaField("metaTitle", "title");
-
-    if (target.id === "cellUnit") return updateSelectedLessonField("unit", target.value);
-    if (target.id === "cellNote") return updateSelectedLessonField("note", target.value);
-    if (target.id === "cellText") return updateSelectedText(target.value);
-    if (target.id === "cellTime") return updateSelectedText(target.value);
     if (target.dataset.rowLabel) return setRowLabel(target.dataset.rowLabel, target.value);
   });
 
   document.addEventListener("change", function(event) {
     const target = event.target;
 
-    if (target.id === "metaWeekStart") {
-      WEEKLY_STATE.setWeekStart(target.value);
-      renderAllWithSelection();
+    if (target.matches(".inline-subject")) {
+      updateInlineSubject(target);
       return;
     }
 
-    if (target.id === "cellSubject") {
-      updateSelectedLessonField("subject", target.value);
+    if (target.id === "metaWeekStart") {
+      WEEKLY_STATE.setWeekStart(target.value);
+      renderAllWithSelection();
+      renderSettingsModalSafe();
       return;
     }
 
@@ -215,15 +308,7 @@ function bindEditorEvents() {
       WEEKLY_STATE.queueSave();
       updatePrintOrientationStyle();
       WEEKLY_RENDER.renderPreview(WEEKLY_STATE.state);
-      highlightSelectedCell();
-      return;
-    }
-
-    if (target.id === "showTimeCount") {
-      WEEKLY_STATE.state.settings.showTimeCount = target.checked;
-      WEEKLY_STATE.queueSave();
-      WEEKLY_RENDER.renderPreview(WEEKLY_STATE.state);
-      highlightSelectedCell();
+      renderSettingsModalSafe();
     }
   });
 }
