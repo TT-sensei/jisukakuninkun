@@ -50,7 +50,7 @@ function renderLessonCell(state, dateKey, row) {
       '<div class="print-lesson" aria-hidden="true">' +
         '<div class="print-subject">' + escapeHTML(subject ? subject.label : "") + '</div>' +
         '<div class="print-unit">' + escapeHTML(cell.unit || "") + '</div>' +
-        (cell.note ? '<div class="print-note">' + escapeHTML(cell.note) + '</div>' : '') +
+        '<div class="print-note" hidden>' + escapeHTML(cell.note || "") + "</div>" +
       '</div>' +
     '</td>';
 }
@@ -182,9 +182,10 @@ function renderPreview(state) {
         '<section class="notice-footer notice-board edu-paper-note" data-row-id="notice" data-date="__week__">' +
           '<div class="notice-board-head">' +
             '<div><span class="eyebrow">WEEK NOTE</span><h2>' + escapeHTML(noticeLabel) + "</h2></div>" +
-            '<span class="notice-board-action">クリックして入力</span>' +
+            '<span class="notice-board-action">ここへ直接入力</span>' +
           "</div>" +
-          '<div class="notice-footer-body">' + (noticeText ? escapeHTML(noticeText).replaceAll("\n", "<br>") : '<span class="placeholder">今週の連絡、準備、提出物、保護者へのお知らせなどを入力</span>') + "</div>" +
+          '<textarea id="inlineNotice" class="inline-notice" rows="5" placeholder="今週の連絡、準備、提出物、保護者へのお知らせなどを入力">' + escapeHTML(noticeText) + "</textarea>" +
+          '<div class="notice-footer-body">' + (noticeText ? escapeHTML(noticeText).replaceAll("\n", "<br>") : "") + "</div>" +
         "</section>" : "") +
     "</div>";
 
