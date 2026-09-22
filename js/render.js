@@ -259,13 +259,16 @@ function renderSidebar(state, selected) {
   const currentRow = selected && selected.dateKey !== "__week__"
     ? WEEKLY_PLAN.getRowDef(selected.rowId)
     : null;
+  const currentHoliday = selected && selected.dateKey !== "__week__"
+    ? WEEKLY_PLAN.getAnnualHolidayForDate(state, selected.dateKey)
+    : null;
 
   const totalCounts = calculateSubjectCounts(state);
   const total = Object.values(totalCounts).reduce(function(sum, value) { return sum + value; }, 0);
 
   let detail = '<div class="empty-selection compact"><div class="selection-icon">⌁</div><div><h2>週案を直接入力</h2><p>教科と単元名は表のマスに直接入力できます。授業のメモはここで管理します。</p></div></div>';
 
-  if (current && currentRow && currentRow.type === "lesson") {
+  if (current && currentRow && currentRow.type === "lesson" && !currentHoliday) {
     const date = WEEKLY_PLAN.fromISODate(selected.dateKey);
     const dayLabel = formatJapaneseDate(date) + "・" + currentRow.period + "時間目";
     const subjectButtons = WEEKLY_PLAN.SUBJECTS.map(function(subject) {
@@ -286,6 +289,10 @@ function renderSidebar(state, selected) {
         '<button type="button" class="secondary-button" id="copyUnitWeek">この単元名を同じ教科のコマへ反映</button>' +
         '<button type="button" class="ghost-button block-button" id="clearCell">このコマをクリア</button>' +
       '</div>';
+  } else if (currentHoliday) {
+    detail =
+      '<div class="empty-selection compact holiday-side-card"><div class="selection-icon">休</div><div><h2>' +
+        escapeHTML(currentHoliday.name) + '</h2><p>祝日に登録されています。この日は全日が休日として扱われ、授業時数にはカウントされません。</p></div></div>';
   } else if (selected && selected.dateKey === "__week__") {
     detail =
       '<div class="empty-selection compact"><div class="selection-icon">⌁</div><div><h2>お知らせ</h2><p>お知らせは週案下部へ直接入力できます。</p></div></div>';
