@@ -74,12 +74,16 @@ function renderTextCell(state, dateKey, row) {
 
   if (holiday) {
     const holidayText = row.id === "event"
-      ? displayText || holiday.name
+      ? manualText
       : holiday.name;
+    const holidayBand = row.id === "event"
+      ? '<div class="holiday-band"><div class="holiday-band-label">' + escapeHTML(holiday.name) + '</div></div>'
+      : '';
     return '<td class="plan-cell text-cell holiday-day ' + (holidayText ? "has-content" : "is-empty") +
       '" data-date="' + escapeHTML(dateKey) + '" data-row-id="' + row.id + '">' +
-        '<div class="holiday-cell-label">' + escapeHTML(holidayText).replaceAll("\n", "<br>") + '</div>' +
-        '<div class="print-text">' + escapeHTML(holidayText).replaceAll("\n", "<br>") + '</div>' +
+        holidayBand +
+        (holidayText ? '<div class="holiday-manual-text">' + escapeHTML(holidayText).replaceAll("\n", "<br>") + '</div>' : '') +
+        '<div class="print-text">' + (holidayText ? escapeHTML(holidayText).replaceAll("\n", "<br>") : '') + '</div>' +
       '</td>';
   }
 
@@ -244,13 +248,18 @@ function positionHolidayOverlays() {
   const table = document.querySelector(".weekly-table");
   if (!table) return;
 
-  const tableRect = table.getBoundingClientRect();
-  const headRow = table.querySelector(".head-row");
-  const headHeight = headRow ? headRow.getBoundingClientRect().height : 0;
-  const spanHeight = Math.max(220, Math.round(tableRect.height - headHeight - 8));
+  table.querySelectorAll(".holiday-band").forEach(function(band) {
+    const cell = band.closest(".plan-cell");
+    if (!cell) return;
 
-  table.querySelectorAll(".holiday-head-label").forEach(function(label) {
-    label.style.setProperty("--holiday-span-height", spanHeight + "px");
+    const bodyTop = table.querySelector("tbody");
+    if (!bodyTop) return;
+
+    const cellRect = cell.getBoundingClientRect();
+    const bodyRect = bodyTop.getBoundingClientRect();
+    const height = Math.max(120, Math.round(bodyRect.bottom - cellRect.top));
+
+    band.style.setProperty("--holiday-band-height", height + "px");
   });
 }
 
