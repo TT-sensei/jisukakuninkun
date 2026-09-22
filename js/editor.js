@@ -54,10 +54,14 @@ function updateSelectedLessonField(field, value) {
 
 function updateSelectedText(value) {
   if (!selectedCell) return;
-  const row = WEEKLY_PLAN.getRowDef(selectedCell.rowId);
-  const cell = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, selectedCell.dateKey, selectedCell.rowId);
-  if (row && row.type === "time") cell.time = value;
-  else cell.text = value;
+  if (selectedCell.rowId === "notice" && selectedCell.dateKey === "__week__") {
+    WEEKLY_STATE.state.meta.notice = value;
+  } else {
+    const row = WEEKLY_PLAN.getRowDef(selectedCell.rowId);
+    const cell = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, selectedCell.dateKey, selectedCell.rowId);
+    if (row && row.type === "time") cell.time = value;
+    else cell.text = value;
+  }
   WEEKLY_STATE.queueSave();
   WEEKLY_RENDER.renderPreview(WEEKLY_STATE.state);
   highlightSelectedCell();
@@ -65,7 +69,11 @@ function updateSelectedText(value) {
 
 function clearSelectedCell() {
   if (!selectedCell) return;
-  WEEKLY_PLAN.removeCell(WEEKLY_STATE.state, selectedCell.dateKey, selectedCell.rowId);
+  if (selectedCell.rowId === "notice" && selectedCell.dateKey === "__week__") {
+    WEEKLY_STATE.state.meta.notice = "";
+  } else {
+    WEEKLY_PLAN.removeCell(WEEKLY_STATE.state, selectedCell.dateKey, selectedCell.rowId);
+  }
   WEEKLY_STATE.queueSave();
   renderAllWithSelection();
 }
@@ -138,6 +146,12 @@ function bindEditorEvents() {
     const cell = event.target.closest(".plan-cell");
     if (cell) {
       selectCell(cell.dataset.date, cell.dataset.rowId);
+      return;
+    }
+
+    const notice = event.target.closest(".notice-footer");
+    if (notice) {
+      selectCell("__week__", "notice");
       return;
     }
 
