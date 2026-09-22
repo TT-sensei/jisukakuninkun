@@ -3,13 +3,16 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <link rel="stylesheet" href="https://tt-sensei.github.io/edu-effects/css/edu-effects.css">
+  <link rel="stylesheet" href="https://tt-sensei.github.io/edu-effects/css/edu-editorial.css">
+  <link rel="stylesheet" href="https://tt-sensei.github.io/edu-effects/css/edu-decorations.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="先生のための週案作成・時数集計・印刷・共有・保存ツール">
   <title>週案メーカー | TT-sensei</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-  <header class="app-header">
+<body class="edu-app edu-style-editorial">
+  <header class="app-header edu-header">
     <div class="brand">
       <h1>週案メーカー</h1>
       <span>作成・時数集計・印刷・共有</span>
@@ -34,7 +37,7 @@
   </header>
 
   <main class="workspace">
-    <section class="preview-panel" aria-label="週案プレビュー">
+    <section class="preview-panel edu-card" aria-label="週案プレビュー">
       <div class="preview-top">
         <div>
           <h2>週案プレビュー</h2>
@@ -47,7 +50,7 @@
       <div id="summaryArea" class="summary-area"></div>
     </section>
 
-    <aside class="settings-panel" aria-label="週案設定">
+    <aside class="settings-panel edu-card" aria-label="週案設定">
       <div id="editorPanel" class="editor-panel"></div>
     </aside>
   </main>
