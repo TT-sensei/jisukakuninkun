@@ -101,8 +101,7 @@ function updateSelectedText(value) {
   if (selectedCell.rowId === "notice" && selectedCell.dateKey === "__week__") {
     WEEKLY_STATE.state.meta.notice = value;
     const out = document.querySelector(".notice-footer-body");
-    if (out) out.innerHTML = value ? escapeHTML(value).replaceAll("
-", "<br>") : "";
+    if (out) out.innerHTML = value ? escapeHTML(value).replaceAll("\n", "<br>") : "";
   }
   WEEKLY_STATE.queueSave();
 }
