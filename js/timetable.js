@@ -80,13 +80,22 @@ function closeTimetableModal() {
 }
 
 function readTimetableForm() {
-  const template = WEEKLY_PLAN.makeTimetableTemplate();
+  const current = WEEKLY_STATE.state.timetable || WEEKLY_PLAN.makeTimetableTemplate();
+  const template = JSON.parse(JSON.stringify(current));
+
+  for (let day = 0; day <= 6; day += 1) {
+    if (!template[day] || typeof template[day] !== "object") template[day] = {};
+    for (let period = 1; period <= 8; period += 1) {
+      template[day][period] = template[day][period] || "";
+    }
+  }
+
   document.querySelectorAll(".timetable-select").forEach(function(select) {
     const day = Number(select.dataset.timetableDay);
     const period = Number(select.dataset.timetablePeriod);
-    if (!template[day]) template[day] = {};
     template[day][period] = select.value;
   });
+
   return template;
 }
 
