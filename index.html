@@ -27,6 +27,7 @@
 
     <div class="header-actions">
       <span class="status-dot"><span id="saveStatus">保存済み</span></span>
+      <button id="timetableButton" class="header-button" type="button">時間割登録</button>
       <button id="newWeekButton" class="header-button" type="button">週を空にする</button>
       <button id="importButton" class="header-button" type="button">読み込み</button>
       <button id="exportButton" class="header-button" type="button">書き出し</button>
@@ -55,6 +56,8 @@
     </aside>
   </main>
 
+  <div id="timetableModal" class="timetable-modal hidden"></div>
+
   <div id="shareModal" class="share-modal hidden" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
     <div class="share-dialog">
       <div class="selection-card-head">
@@ -76,6 +79,7 @@
   <script src="js/state.js"></script>
   <script src="js/render.js"></script>
   <script src="js/editor.js"></script>
+  <script src="js/timetable.js"></script>
   <script src="js/file.js"></script>
   <script src="js/share.js"></script>
   <script src="js/app.js"></script>
