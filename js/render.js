@@ -27,18 +27,32 @@ function subjectPill(subjectId) {
     escapeHTML(subject.label) + "</span>";
 }
 
+
 function renderLessonCell(state, dateKey, row) {
   const cell = WEEKLY_PLAN.getCell(state, dateKey, row.id);
-  const unit = cell.unit || "";
-  const note = cell.note || "";
-  return '<td class="plan-cell lesson-cell ' + (cell.subject ? "has-content" : "is-empty") +
-    '" data-date="' + escapeHTML(dateKey) + '" data-row-id="' + row.id + '">' +
-    '<div class="cell-click-area">' +
-      '<div class="cell-main-line">' + subjectPill(cell.subject) + "</div>" +
-      '<div class="unit-name">' + (unit ? escapeHTML(unit) : '<span class="placeholder">単元名</span>') + "</div>" +
-      (note ? '<div class="lesson-note">' + escapeHTML(note) + "</div>" : "") +
-      '<span class="cell-plus" aria-hidden="true">＋</span>' +
-    "</div></td>";
+  const subject = WEEKLY_PLAN.getSubject(cell.subject);
+  const subjectOptions = '<option value="">教科</option>' +
+    WEEKLY_PLAN.SUBJECTS.map(function(item) {
+      return '<option value="' + escapeHTML(item.id) + '"' +
+        (cell.subject === item.id ? " selected" : "") + ">" +
+        escapeHTML(item.label) + "</option>";
+    }).join("");
+  return '<td class="plan-cell lesson-cell ' + (cell.subject || cell.unit || cell.note ? "has-content" : "is-empty") +
+    '" data-date="' + escapeHTML(dateKey) + '" data-row-id="' + row.id + '" style="--subject-color:' +
+    escapeHTML(subject ? subject.color : "#b8c0c5") + '">' +
+      '<div class="inline-lesson">' +
+        '<select class="inline-edit inline-subject" data-cell-field="subject">' + subjectOptions + '</select>' +
+        '<input class="inline-edit inline-unit" data-cell-field="unit" type="text" value="' + escapeHTML(cell.unit || "") +
+          '" placeholder="単元名" aria-label="単元名">' +
+        '<input class="inline-edit inline-note" data-cell-field="note" type="text" value="' + escapeHTML(cell.note || "") +
+          '" placeholder="メモ" aria-label="授業メモ">' +
+      '</div>' +
+      '<div class="print-lesson" aria-hidden="true">' +
+        '<div class="print-subject">' + escapeHTML(subject ? subject.label : "") + '</div>' +
+        '<div class="print-unit">' + escapeHTML(cell.unit || "") + '</div>' +
+        (cell.note ? '<div class="print-note">' + escapeHTML(cell.note) + '</div>' : '') +
+      '</div>' +
+    '</td>';
 }
 
 function renderTextCell(state, dateKey, row) {
@@ -46,12 +60,10 @@ function renderTextCell(state, dateKey, row) {
   const text = cell.text || "";
   return '<td class="plan-cell text-cell ' + (text ? "has-content" : "is-empty") +
     '" data-date="' + escapeHTML(dateKey) + '" data-row-id="' + row.id + '">' +
-    '<div class="cell-click-area">' +
-      '<div class="text-value">' +
-        (text ? escapeHTML(text).replaceAll("\n", "<br>") : '<span class="placeholder">クリックして入力</span>') +
-      "</div>" +
-      '<span class="cell-plus" aria-hidden="true">＋</span>' +
-    "</div></td>";
+      '<input class="inline-edit inline-text" data-cell-field="text" type="text" value="' + escapeHTML(text) +
+        '" placeholder="クリックして入力" aria-label="' + escapeHTML(row.defaultLabel) + '">' +
+      '<div class="print-text">' + (text ? escapeHTML(text).replaceAll("\n", "<br>") : "") + '</div>' +
+    '</td>';
 }
 
 function renderTimeCell(state, dateKey, row) {
@@ -59,10 +71,40 @@ function renderTimeCell(state, dateKey, row) {
   const time = cell.time || "";
   return '<td class="plan-cell time-cell ' + (time ? "has-content" : "is-empty") +
     '" data-date="' + escapeHTML(dateKey) + '" data-row-id="' + row.id + '">' +
-    '<div class="cell-click-area">' +
-      '<div class="time-value">' + (time ? escapeHTML(time) : '<span class="placeholder">時刻</span>') + "</div>" +
-      '<span class="cell-plus" aria-hidden="true">＋</span>' +
-    "</div></td>";
+      '<input class="inline-edit inline-time" data-cell-field="time" type="time" value="' + escapeHTML(time) +
+        '" aria-label="下校時刻">' +
+      '<div class="print-time">' + escapeHTML(time) + '</div>' +
+    '</td>';
+}
+
+function updatePrintLessonView(cellEl, cell) {
+  if (!cellEl) return;
+  const subject = WEEKLY_PLAN.getSubject(cell.subject);
+  cellEl.style.setProperty("--subject-color", subject ? subject.color : "#b8c0c5");
+  const subjectEl = cellEl.querySelector(".print-subject");
+  const unitEl = cellEl.querySelector(".print-unit");
+  const noteEl = cellEl.querySelector(".print-note");
+  if (subjectEl) subjectEl.textContent = subject ? subject.label : "";
+  if (unitEl) unitEl.textContent = cell.unit || "";
+  if (noteEl) noteEl.textContent = cell.note || "";
+  cellEl.classList.toggle("has-content", !!(cell.subject || cell.unit || cell.note));
+  cellEl.classList.toggle("is-empty", !(cell.subject || cell.unit || cell.note));
+}
+
+function updatePrintTextView(cellEl, text) {
+  if (!cellEl) return;
+  const out = cellEl.querySelector(".print-text");
+  if (out) out.innerHTML = text ? escapeHTML(text).replaceAll("\n", "<br>") : "";
+  cellEl.classList.toggle("has-content", !!text);
+  cellEl.classList.toggle("is-empty", !text);
+}
+
+function updatePrintTimeView(cellEl, time) {
+  if (!cellEl) return;
+  const out = cellEl.querySelector(".print-time");
+  if (out) out.textContent = time || "";
+  cellEl.classList.toggle("has-content", !!time);
+  cellEl.classList.toggle("is-empty", !time);
 }
 
 function renderWeekTable(state) {
@@ -170,34 +212,67 @@ function renderSidebar(state, selected) {
   const target = document.getElementById("editorPanel");
   if (!target) return;
 
-  target.innerHTML =
-    renderSelectedEditor(state, selected) +
-    '<section class="settings-section"><div class="section-heading"><div><span class="eyebrow">WEEK</span><h2>週の基本情報</h2></div></div>' +
-      '<div class="form-grid two">' +
-        '<label class="field"><span>学級</span><input id="metaGradeClass" type="text" value="' + escapeHTML(state.meta.gradeClass) + '" placeholder="6-1"></label>' +
-        '<label class="field"><span>週の開始日</span><input id="metaWeekStart" type="date" value="' + escapeHTML(state.meta.weekStart) + '"></label>' +
-      "</div>" +
-      '<label class="field"><span>学校名（印刷時に表示）</span><input id="metaSchoolName" type="text" value="' + escapeHTML(state.meta.schoolName) + '" placeholder="学校名"></label>' +
-      '<div class="form-grid two">' +
-        '<label class="field"><span>先生名</span><input id="metaTeacherName" type="text" value="' + escapeHTML(state.meta.teacherName) + '" placeholder="任意"></label>' +
-        '<label class="field"><span>週案タイトル</span><input id="metaTitle" type="text" value="' + escapeHTML(state.meta.title) + '" placeholder="週案"></label>' +
-      "</div></section>" +
+  const current = selected ? WEEKLY_PLAN.getCell(state, selected.dateKey, selected.rowId) : null;
+  const currentRow = selected && selected.rowId !== "notice" ? WEEKLY_PLAN.getRowDef(selected.rowId) : null;
 
-    '<section class="settings-section"><div class="section-heading"><div><span class="eyebrow">DISPLAY</span><h2>表示する曜日</h2></div><span class="mini-help">必要な曜日だけ残せます</span></div>' +
+  const subjectButtons = WEEKLY_PLAN.SUBJECTS.map(function(subject) {
+    const active = current && current.subject === subject.id;
+    return '<button type="button" class="subject-quick' + (active ? " active" : "") +
+      '" data-subject-quick="' + escapeHTML(subject.id) + '" style="--subject-color:' +
+      escapeHTML(subject.color) + '">' + escapeHTML(subject.label) + '</button>';
+  }).join("");
+
+  target.innerHTML =
+    '<section class="selection-card convenience-card">' +
+      '<div class="selection-card-head"><div><span class="eyebrow">QUICK TOOLS</span><h2>便利機能</h2></div></div>' +
+      (selected && currentRow && currentRow.type === "lesson"
+        ? '<p class="selected-cell-label">' + escapeHTML(selected.dateKey) + "・" + currentRow.period + '時間目を選択中</p>' +
+          '<div class="subject-quick-grid">' + subjectButtons + '</div>' +
+          '<div class="quick-tool-actions">' +
+            '<button type="button" class="secondary-button" id="copyUnitWeek">選択中の単元を同じ教科へ反映</button>' +
+            '<button type="button" class="ghost-button block-button" id="clearCell">このコマをクリア</button>' +
+          '</div>'
+        : '<div class="empty-selection compact"><div class="selection-icon">⌁</div><div><h2>週案のマスを選択</h2><p>プレビューのマスへ、そのまま教科・単元・予定を入力できます。</p></div></div>') +
+    '</section>' +
+    '<section class="settings-section summary-tool-card">' +
+      '<div class="section-heading"><div><span class="eyebrow">WEEK TOTAL</span><h2>今週の時数</h2></div>' +
+      '<button type="button" class="ghost-button" id="openSettings">設定</button></div>' +
+      '<div class="summary-mini">' +
+        '<div><span>合計</span><strong>' + Object.values(calculateSubjectCounts(state)).reduce(function(sum, value) { return sum + value; }, 0) + '<small>時間</small></strong></div>' +
+        '<p>曜日・行の表示、印刷レイアウトなどは設定から変更できます。</p>' +
+      '</div>' +
+    '</section>';
+}
+
+function renderSelectedEditor() { return ""; }
+
+
+function renderSettingsModal(state) {
+  const target = document.getElementById("settingsContent");
+  if (!target) return;
+  const label = state.settings.labels;
+
+  target.innerHTML =
+    '<div class="settings-modal-head"><div><span class="eyebrow">SETTINGS</span><h2 id="settingsTitle">週案の設定</h2><p>曜日、週案の構成、印刷レイアウトなどをここで調整します。</p></div>' +
+      '<button type="button" class="ghost-button" id="settingsClose">閉じる</button></div>' +
+    '<section class="settings-section"><div class="section-heading"><div><span class="eyebrow">WEEK</span><h3>週の基本情報</h3></div></div>' +
+      '<div class="form-grid two"><label class="field"><span>学級</span><input id="metaGradeClass" type="text" value="' + escapeHTML(state.meta.gradeClass) + '" placeholder="6-1"></label>' +
+      '<label class="field"><span>週の開始日</span><input id="metaWeekStart" type="date" value="' + escapeHTML(state.meta.weekStart) + '"></label></div>' +
+      '<label class="field"><span>学校名（印刷時に表示）</span><input id="metaSchoolName" type="text" value="' + escapeHTML(state.meta.schoolName) + '" placeholder="学校名"></label>' +
+      '<div class="form-grid two"><label class="field"><span>先生名</span><input id="metaTeacherName" type="text" value="' + escapeHTML(state.meta.teacherName) + '" placeholder="任意"></label>' +
+      '<label class="field"><span>週案タイトル</span><input id="metaTitle" type="text" value="' + escapeHTML(state.meta.title) + '" placeholder="週案"></label></div></section>' +
+    '<section class="settings-section"><div class="section-heading"><div><span class="eyebrow">DISPLAY</span><h3>表示する曜日</h3></div></div>' +
       '<div class="weekday-grid">' +
       [[1,"月"],[2,"火"],[3,"水"],[4,"木"],[5,"金"],[6,"土"],[0,"日"]].map(function(item) {
-        const value = item[0], label = item[1];
-        return '<label class="toggle-chip"><input type="checkbox" data-weekday="' + value + '"' +
-          (state.settings.weekdays.includes(value) ? " checked" : "") + '><span>' + label + "</span></label>";
-      }).join("") +
-      "</div></section>" +
-
-    '<section class="settings-section"><div class="section-heading"><div><span class="eyebrow">ROWS</span><h2>週案の構成</h2></div><span class="mini-help">不要な行はオフ</span></div>' +
+        return '<label class="toggle-chip"><input type="checkbox" data-weekday="' + item[0] + '"' +
+          (state.settings.weekdays.includes(item[0]) ? " checked" : "") + '><span>' + item[1] + '</span></label>';
+      }).join("") + '</div></section>' +
+    '<section class="settings-section"><div class="section-heading"><div><span class="eyebrow">ROWS</span><h3>週案の構成</h3></div><span class="mini-help">不要な行を非表示</span></div>' +
       '<div class="period-quick"><span>授業時数</span>' +
       [4,5,6,7,8].map(function(n) {
         return '<button type="button" class="quick-button ' + (state.settings.periodCount === n ? "active" : "") +
           '" data-period-count="' + n + '">' + n + "時間まで</button>";
-      }).join("") + "</div>" +
+      }).join("") + '</div>' +
       '<div class="row-settings">' +
       WEEKLY_PLAN.ROW_DEFS.map(function(row) {
         const visible = row.type === "lesson"
@@ -206,83 +281,26 @@ function renderSidebar(state, selected) {
         const labelValue = row.type === "lesson"
           ? row.period + "時間目"
           : (state.settings.labels[row.labelKey] || row.defaultLabel);
-        const canToggle = row.type === "lesson" && row.period > state.settings.periodCount ? false : true;
+        const canToggle = row.type !== "lesson" || row.period <= state.settings.periodCount;
         return '<div class="row-setting"><label class="row-setting-main"><input type="checkbox" data-row-visible="' + row.id + '"' +
-          (visible ? " checked" : "") + (canToggle ? "" : " disabled") + '><span>' + escapeHTML(labelValue) +
-          "</span></label>" +
-          (row.labelKey ? '<input class="row-label-input" data-row-label="' + row.labelKey + '" type="text" value="' + escapeHTML(labelValue) +
-            '" aria-label="' + escapeHTML(labelValue) + 'の表示名">' :
-            '<span class="row-fixed-label">' + row.period + "時間目</span>") +
-          "</div>";
-      }).join("") +
-      "</div></section>" +
-
-    '<section class="settings-section compact-settings"><div class="section-heading"><div><span class="eyebrow">PRINT</span><h2>印刷レイアウト</h2></div></div>' +
+          (visible ? " checked" : "") + (canToggle ? "" : " disabled") + '><span>' + escapeHTML(labelValue) + '</span></label>' +
+          (row.labelKey ? '<input class="row-label-input" data-row-label="' + row.labelKey + '" type="text" value="' + escapeHTML(labelValue) + '" aria-label="' + escapeHTML(labelValue) + 'の表示名">' :
+            '<span class="row-fixed-label">' + row.period + "時間目" + '</span>') + '</div>';
+      }).join("") + '</div></section>' +
+    '<section class="settings-section"><div class="section-heading"><div><span class="eyebrow">PRINT</span><h3>印刷レイアウト</h3></div></div>' +
       '<div class="segmented"><label><input type="radio" name="printOrientation" value="portrait"' +
-        (state.settings.printOrientation === "portrait" ? " checked" : "") + "><span>A4 縦</span></label>" +
+        (state.settings.printOrientation === "portrait" ? " checked" : "") + '><span>A4 縦</span></label>' +
         '<label><input type="radio" name="printOrientation" value="landscape"' +
-        (state.settings.printOrientation === "landscape" ? " checked" : "") + "><span>A4 横</span></label></div>" +
-      '<p class="input-help">時数は画面下部に教科ごとに表示されます。印刷には入りません。</p>' +
-    "</section>";
-}
-
-function renderSelectedEditor(state, selected) {
-  if (!selected || !selected.dateKey || !selected.rowId) {
-    return '<section class="selection-card empty-selection"><div class="selection-icon">⌁</div><div>' +
-      '<span class="eyebrow">CELL EDITOR</span><h2>週案のマスを選択</h2>' +
-      '<p>左の週案で教科・単元名・行事・持ち物などのマスを押すと、ここから詳しく入力できます。</p></div></section>';
-  }
-
-  if (selected.rowId === "notice" && selected.dateKey === "__week__") {
-    const noticeLabel = state.settings.labels.notice || "お知らせ";
-    return '<section class="selection-card"><div class="selection-card-head"><div><span class="eyebrow">WEEK NOTE</span><h2>' +
-      escapeHTML(noticeLabel) + "を入力</h2></div><button type=\"button\" class=\"ghost-button\" id=\"clearCell\">クリア</button></div>" +
-      '<label class="field"><span>' + escapeHTML(noticeLabel) + '</span><textarea id="cellText" rows="7" placeholder="週全体のお知らせ・連絡事項を入力">' +
-      escapeHTML(state.meta.notice || "") + "</textarea></label>" +
-      '<p class="input-help">週案の一番下に、横いっぱいのお知らせ欄として表示されます。</p></section>';
-  }
-
-  const row = WEEKLY_PLAN.getRowDef(selected.rowId);
-  const date = WEEKLY_PLAN.fromISODate(selected.dateKey);
-  const weekdays = ["日","月","火","水","木","金","土"];
-  const dayLabel = date.getMonth() + 1 + "/" + date.getDate() + "（" + weekdays[date.getDay()] + "）";
-  const cell = WEEKLY_PLAN.getCell(state, selected.dateKey, selected.rowId);
-  if (!row) return "";
-
-  if (row.type === "lesson") {
-    return '<section class="selection-card"><div class="selection-card-head"><div><span class="eyebrow">' +
-      escapeHTML(dayLabel) + "・" + row.period + '時間目</span><h2>授業を入力</h2></div>' +
-      '<button type="button" class="ghost-button" id="clearCell">このマスをクリア</button></div>' +
-      '<label class="field"><span>教科</span><select id="cellSubject"><option value="">教科を選択</option>' +
-      WEEKLY_PLAN.SUBJECTS.map(function(subject) {
-        return '<option value="' + escapeHTML(subject.id) + '"' +
-          (cell.subject === subject.id ? " selected" : "") + ">" + escapeHTML(subject.label) + "</option>";
-      }).join("") + "</select></label>" +
-      '<label class="field"><span>単元名</span><input id="cellUnit" type="text" value="' + escapeHTML(cell.unit || "") +
-        '" placeholder="例：やまなし / 分数のかけ算 / 日本の国土"></label>' +
-      '<label class="field"><span>授業内容・メモ</span><textarea id="cellNote" rows="4" placeholder="必要なときだけ入力">' +
-        escapeHTML(cell.note || "") + "</textarea></label>" +
-      '<button type="button" class="secondary-button" id="copyUnitWeek">この単元名を同じ教科のコマへ</button>' +
-      '<p class="input-help">教科と単元名を入力すると、左の週案にそのまま反映されます。</p></section>';
-  }
-
-  if (row.type === "time") {
-    return '<section class="selection-card"><div class="selection-card-head"><div><span class="eyebrow">' +
-      escapeHTML(dayLabel) + '</span><h2>' + escapeHTML(state.settings.labels.leaving || "下校") + '</h2></div>' +
-      '<button type="button" class="ghost-button" id="clearCell">クリア</button></div>' +
-      '<label class="field"><span>下校時刻</span><input id="cellTime" type="time" value="' + escapeHTML(cell.time || "") + '"></label></section>';
-  }
-
-  return '<section class="selection-card"><div class="selection-card-head"><div><span class="eyebrow">' +
-    escapeHTML(dayLabel) + '</span><h2>' + escapeHTML(state.settings.labels[row.labelKey] || row.defaultLabel) +
-    'を入力</h2></div><button type="button" class="ghost-button" id="clearCell">クリア</button></div>' +
-    '<label class="field"><span>内容</span><textarea id="cellText" rows="' +
-    (row.id === "notice" ? 6 : 4) + '" placeholder="予定を入力">' + escapeHTML(cell.text || "") + "</textarea></label></section>";
+        (state.settings.printOrientation === "landscape" ? " checked" : "") + '><span>A4 横</span></label></div></section>';
 }
 
 window.WEEKLY_RENDER = {
   renderPreview,
   renderSidebar,
   renderSummary,
-  calculateSubjectCounts
+  calculateSubjectCounts,
+  updatePrintLessonView,
+  updatePrintTextView,
+  updatePrintTimeView,
+  renderSettingsModal
 };
