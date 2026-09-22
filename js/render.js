@@ -83,10 +83,8 @@ function updatePrintLessonView(cellEl, cell) {
   cellEl.style.setProperty("--subject-color", subject ? subject.color : "#b8c0c5");
   const subjectEl = cellEl.querySelector(".print-subject");
   const unitEl = cellEl.querySelector(".print-unit");
-  const noteEl = cellEl.querySelector(".print-note");
   if (subjectEl) subjectEl.textContent = subject ? subject.label : "";
   if (unitEl) unitEl.textContent = cell.unit || "";
-  if (noteEl) noteEl.textContent = cell.note || "";
   cellEl.classList.toggle("has-content", !!(cell.subject || cell.unit || cell.note));
   cellEl.classList.toggle("is-empty", !(cell.subject || cell.unit || cell.note));
 }
