@@ -37,29 +37,17 @@ js/app.js は起動と全体イベントを担当します。
 
 
 
-## Googleクラウド同期
+## Google Driveでの保管
 
-別の端末でも同じ週案を使いたい場合は、Google Apps Scriptを同期サーバーとして利用できます。
+別の端末でも同じ週案を使いたい場合は、Google DriveをJSONデータの保管場所として利用できます。
 
-設定画面の「クラウド同期」にApps ScriptのウェブアプリURLを登録し、「Googleアカウントを確認」で接続します。画面には現在接続したGoogleアカウントが表示されます。
+設定画面の「Google Drive」に共有・保管用フォルダのURLを登録すると、週案メーカーからそのフォルダを開けます。
 
-同期データはApps ScriptのUser PropertiesへGoogleアカウント単位で保存します。GitHubには週案データやGoogleのパスワード、アクセストークンを保存しません。Google DriveやGmailの読み書き権限も使用しません。
+使い方は「書き出し」→ JSONファイルをGoogle Driveへ保存 → 別の端末でGoogle DriveからJSONをダウンロード → 「読み込み」です。
 
-### Apps Scriptの設定
+この方式ではGoogle Drive APIやGoogleログインをアプリへ組み込まないため、Google Cloud側の認証設定は不要です。Driveの権限管理はGoogle Drive側で行います。
 
-リポジトリの `apps-script/` に、同期用のApps Scriptコードがあります。
-
-1. Google Apps Scriptでスタンドアロンプロジェクトを作成します。
-2. `apps-script/Code.gs`、`apps-script/Index.html`、`apps-script/appsscript.json` を同名ファイルとして登録します。
-3. プロジェクトのスクリプトプロパティに `ALLOWED_EMAILS` を追加し、利用を許可するGoogleアカウントのメールアドレスを登録します。
-4. 「デプロイ」→「新しいデプロイ」→「ウェブアプリ」で公開します。
-5. 「実行するユーザー」は「ウェブアプリにアクセスしているユーザー」にします。
-6. 「アクセスできるユーザー」は、個人利用ならGoogleアカウントを持つユーザー、学校内に限定するなら学校のGoogle Workspaceドメインなど、運用に合わせて設定します。
-7. 発行された `/exec` URLを週案メーカーの「設定」→「クラウド同期」へ登録します。
-
-同期対象をGoogleアカウント単位で分けるため、同じApps Scriptを複数人が利用してもUser Properties上の週案データはユーザーごとに分離されます。
-
-クラウド保存とクラウドからの読み込みは明示的に操作する方式です。普段の端末内自動保存はそのまま利用できます。クラウドから読み込むと、この端末の現在の状態をクラウド側の週案で置き換えるため、読み込み前に確認画面を出します。
+「週案メーカー」からGoogle Driveへ自動アップロードする機能ではありません。直接アップロードまで自動化する場合は、Google Drive APIとOAuth 2.0の設定が必要になります。
 
 ## 年間予定
 
