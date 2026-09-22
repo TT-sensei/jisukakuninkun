@@ -185,7 +185,7 @@ function normalizeState(raw) {
     }
   };
 
-  base.meta.weekStart = toISODate(getMonday(fromISODate(base.meta.weekStart || base.meta.weekStart)));
+  state.meta.weekStart = toISODate(getMonday(fromISODate(state.meta.weekStart || base.meta.weekStart)));
   state.settings.weekdays = (Array.isArray(state.settings.weekdays) ? state.settings.weekdays : [1,2,3,4,5])
     .map(Number)
     .filter(n => n >= 0 && n <= 6)
@@ -222,7 +222,7 @@ function normalizeState(raw) {
   state.settings.periodCount = Math.min(8, Math.max(1, Number(state.settings.periodCount) || 6));
   state.settings.printOrientation = state.settings.printOrientation === "landscape" ? "landscape" : "portrait";
 
-  for (const date of getWeekDates(base.meta.weekStart, [0,1,2,3,4,5,6])) {
+  for (const date of getWeekDates(state.meta.weekStart, [0,1,2,3,4,5,6])) {
     const key = toISODate(date);
     if (!state.cells[key] || typeof state.cells[key] !== "object") state.cells[key] = {};
   }
