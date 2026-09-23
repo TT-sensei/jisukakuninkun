@@ -1,4 +1,4 @@
-const WEEKLY_PLAN_VERSION = 5;
+const WEEKLY_PLAN_VERSION = 6;
 
 const SUBJECTS = [
   { id: "国語", label: "国語", color: "#e85b6b" },
