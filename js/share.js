@@ -99,7 +99,6 @@ function mergeSharedWeekIntoLocal(shared) {
     cells: mergedCells
   };
 
-  WEEKLY_PLAN.setWeekNotice(merged, incoming.meta.weekStart, incoming.meta.weekStart);
   if (Object.prototype.hasOwnProperty.call(incoming.meta || {}, "notice")) {
     WEEKLY_PLAN.setWeekNotice(merged, incoming.meta.notice, incoming.meta.weekStart);
   }
