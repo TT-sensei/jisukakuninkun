@@ -116,7 +116,8 @@ function defaultState() {
       gradeClass: "6-1",
       schoolName: "",
       teacherName: "",
-      weekStart
+      weekStart,
+      notices: {}
     },
     settings: {
       weekdays: [1, 2, 3, 4, 5],
@@ -157,7 +158,7 @@ function normalizeState(raw) {
   const state = {
     ...base,
     ...source,
-    meta: { ...base.meta, ...(source.meta || {}) },
+    meta: { ...base.meta, ...(source.meta || {}), notices: { ...base.meta.notices, ...((source.meta || {}).notices || {}) } },
     settings: {
       ...base.settings,
       ...(source.settings || {}),
@@ -214,7 +215,19 @@ function normalizeState(raw) {
     }
   }
 
-  state.meta.notice = state.meta.notice || "";
+  if (!state.meta.notices || typeof state.meta.notices !== "object" || Array.isArray(state.meta.notices)) {
+    state.meta.notices = {};
+  }
+
+  Object.keys(state.meta.notices).forEach(function(key) {
+    state.meta.notices[key] = String(state.meta.notices[key] || "");
+  });
+
+  // 旧形式の「お知らせ」は、現在の週のお知らせとして引き継ぐ
+  if (state.meta.notice && !state.meta.notices[state.meta.weekStart]) {
+    state.meta.notices[state.meta.weekStart] = String(state.meta.notice);
+  }
+  state.meta.notice = "";
 
   // 欠課フラグを正規化（旧データは通常授業として扱う）
   Object.keys(state.cells).forEach(function(dateKey) {
@@ -256,6 +269,21 @@ function createTextCell(text = "") {
 
 function createTimeCell(time = "") {
   return { kind: "time", time };
+}
+
+function getWeekNotice(state, weekStart) {
+  const key = toISODate(getMonday(fromISODate(weekStart || state.meta.weekStart)));
+  return state.meta && state.meta.notices ? String(state.meta.notices[key] || "") : "";
+}
+
+function setWeekNotice(state, value, weekStart) {
+  if (!state.meta.notices || typeof state.meta.notices !== "object" || Array.isArray(state.meta.notices)) {
+    state.meta.notices = {};
+  }
+  const key = toISODate(getMonday(fromISODate(weekStart || state.meta.weekStart)));
+  const text = String(value ?? "");
+  if (text) state.meta.notices[key] = text;
+  else delete state.meta.notices[key];
 }
 
 function getRowDef(rowId) {
@@ -373,5 +401,7 @@ window.WEEKLY_PLAN = {
   getAnnualEntriesForDate,
   getAnnualHolidayForDate,
   getAnnualEventTextForDate,
+  getWeekNotice,
+  setWeekNotice,
   createAnnualEntry
 };
