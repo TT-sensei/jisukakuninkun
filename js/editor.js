@@ -135,7 +135,7 @@ function updateSelectedLessonField(field, value) {
 function updateSelectedText(value) {
   if (!selectedCell) return;
   if (selectedCell.rowId === "notice" && selectedCell.dateKey === "__week__") {
-    WEEKLY_STATE.state.meta.notice = value;
+    WEEKLY_PLAN.setWeekNotice(WEEKLY_STATE.state, value);
     const out = document.querySelector(".notice-footer-body");
     if (out) out.innerHTML = value ? escapeHTML(value).replaceAll("\n", "<br>") : "";
   }
@@ -146,7 +146,7 @@ function clearSelectedCell() {
   if (!selectedCell) return;
 
   if (selectedCell.rowId === "notice" && selectedCell.dateKey === "__week__") {
-    WEEKLY_STATE.state.meta.notice = "";
+    WEEKLY_PLAN.setWeekNotice(WEEKLY_STATE.state, "");
   } else {
     WEEKLY_PLAN.removeCell(WEEKLY_STATE.state, selectedCell.dateKey, selectedCell.rowId);
   }
