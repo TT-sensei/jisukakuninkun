@@ -1066,7 +1066,10 @@ button { cursor: pointer; }
   .app-header,
   .preview-top,
   .settings-panel,
-  .summary-area {
+  .summary-area,
+  .settings-modal,
+  .timetable-modal,
+  .share-modal {
     display: none !important;
   }
 
@@ -1565,15 +1568,18 @@ button { cursor: pointer; }
 }
 
 @media print {
+  .annual-derived,
   .inline-edit,
   .inline-notice,
   .notice-board-action {
     display: none !important;
   }
+
   .print-lesson,
   .print-text,
   .print-time {
-    display: block;
+    display: block !important;
+    visibility: visible !important;
   }
   .print-note {
     display: block;
