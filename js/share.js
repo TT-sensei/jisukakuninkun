@@ -7,9 +7,14 @@ function buildSharePayload() {
     weekKeys[key] = state.cells[key] || {};
   });
 
+  const sharedMeta = { ...state.meta };
+  delete sharedMeta.notices;
+  delete sharedMeta.notice;
+  sharedMeta.notice = WEEKLY_PLAN.getWeekNotice(state);
+
   return {
     version: state.version,
-    meta: { ...state.meta },
+    meta: sharedMeta,
     settings: JSON.parse(JSON.stringify(state.settings)),
     calendar: {
       annual: state.calendar && Array.isArray(state.calendar.annual)
@@ -82,13 +87,22 @@ function mergeSharedWeekIntoLocal(shared) {
       : {};
   });
 
+  const mergedMeta = { ...local.meta, ...incoming.meta };
+  delete mergedMeta.notices;
+  delete mergedMeta.notice;
+
   const merged = {
     ...local,
     version: incoming.version,
-    meta: { ...local.meta, ...incoming.meta },
+    meta: { ...mergedMeta, notices: { ...(local.meta.notices || {}) } },
     settings: JSON.parse(JSON.stringify(incoming.settings)),
     cells: mergedCells
   };
+
+  WEEKLY_PLAN.setWeekNotice(merged, incoming.meta.weekStart, incoming.meta.weekStart);
+  if (Object.prototype.hasOwnProperty.call(incoming.meta || {}, "notice")) {
+    WEEKLY_PLAN.setWeekNotice(merged, incoming.meta.notice, incoming.meta.weekStart);
+  }
 
   if (shared && Object.prototype.hasOwnProperty.call(shared, "calendar")) {
     merged.calendar = JSON.parse(JSON.stringify(incoming.calendar));
