@@ -224,7 +224,7 @@ function renderPreview(state) {
   if (!preview) return;
 
   const noticeLabel = state.settings.labels.notice || "お知らせ";
-  const noticeText = state.meta.notice || "";
+  const noticeText = WEEKLY_PLAN.getWeekNotice(state);
 
   preview.innerHTML =
     '<div class="print-sheet">' +
