@@ -244,8 +244,8 @@ button { cursor: pointer; }
 }
 
 .plan-preview-wrap {
-  overflow: auto;
-  max-height: calc(100vh - 135px);
+  overflow: visible;
+  max-height: none;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--panel);
@@ -383,7 +383,7 @@ button { cursor: pointer; }
 
 .row-lesson .plan-cell { height: 84px; }
 
-.row-items .plan-cell { height: 68px; }
+.row-items .plan-cell { height: 82px; }
 
 .row-time .plan-cell { height: 48px; }
 
@@ -1979,7 +1979,7 @@ button { cursor: pointer; }
   }
 
   .row-items .plan-cell {
-    height: 13mm;
+    height: 17mm;
   }
 
   .row-time .plan-cell {
