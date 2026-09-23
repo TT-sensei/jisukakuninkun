@@ -214,7 +214,19 @@ function normalizeState(raw) {
     }
   }
 
-  state.meta.notice = state.meta.notice || "";\n\n  // 欠課フラグを正規化（旧データは通常授業として扱う）\n  Object.keys(state.cells).forEach(function(dateKey) {\n    const day = state.cells[dateKey];\n    if (!day || typeof day !== "object") return;\n    Object.keys(day).forEach(function(rowId) {\n      const row = getRowDef(rowId);\n      if (row && row.type === "lesson" && day[rowId] && typeof day[rowId] === "object") {\n        day[rowId].absent = !!day[rowId].absent;\n      }\n    });\n  });
+  state.meta.notice = state.meta.notice || "";
+
+  // 欠課フラグを正規化（旧データは通常授業として扱う）
+  Object.keys(state.cells).forEach(function(dateKey) {
+    const day = state.cells[dateKey];
+    if (!day || typeof day !== "object") return;
+    Object.keys(day).forEach(function(rowId) {
+      const row = getRowDef(rowId);
+      if (row && row.type === "lesson" && day[rowId] && typeof day[rowId] === "object") {
+        day[rowId].absent = !!day[rowId].absent;
+      }
+    });
+  });
 
   for (let day = 0; day <= 6; day += 1) {
     if (!state.timetable[day] || typeof state.timetable[day] !== "object") state.timetable[day] = {};
