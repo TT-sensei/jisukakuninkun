@@ -31,11 +31,11 @@ function updateHeader() {
 
 function getPreviewZoom() {
   const raw = Number(localStorage.getItem("tt-sensei-weekly-plan-preview-zoom"));
-  return Number.isFinite(raw) && raw >= 70 && raw <= 110 ? raw : 90;
+  return Number.isFinite(raw) && raw >= 70 && raw <= 110 ? raw : 82;
 }
 
 function applyPreviewZoom(value) {
-  const zoom = Math.min(110, Math.max(70, Number(value) || 90));
+  const zoom = Math.min(110, Math.max(70, Number(value) || 82));
   const preview = document.getElementById("planPreview");
   const input = document.getElementById("previewZoom");
   const output = document.getElementById("previewZoomValue");
