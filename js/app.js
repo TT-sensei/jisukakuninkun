@@ -79,7 +79,7 @@ function clearCurrentWeek() {
     d.setDate(start.getDate() + i);
     WEEKLY_STATE.state.cells[WEEKLY_PLAN.toISODate(d)] = {};
   }
-  WEEKLY_STATE.state.meta.notice = "";
+  WEEKLY_PLAN.setWeekNotice(WEEKLY_STATE.state, "");
   WEEKLY_STATE.queueSave();
   window.WEEKLY_EDITOR.clearSelection();
 }
