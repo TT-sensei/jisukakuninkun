@@ -25,6 +25,7 @@
 
 index.html は表示の骨組みです。
 styles.css は画面表示と印刷用CSSです。
+workspace.css はパソコン・タブレット向けの作業画面レイアウトを担当します。
 js/data.js は教科・行・週案データの定義です。
 js/state.js は自動保存と週の状態管理です。
 js/render.js は週案と集計表示を担当します。
