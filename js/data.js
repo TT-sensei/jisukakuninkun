@@ -425,6 +425,7 @@ window.WEEKLY_PLAN = {
   ROW_DEFS,
   DEFAULT_LABELS,
   toISODate,
+  isValidISODate,
   fromISODate,
   getMonday,
   getWeekDates,
