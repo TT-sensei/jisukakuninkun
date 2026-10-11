@@ -453,6 +453,45 @@ function copyPreviousWeekLessons(state) {
   return copied;
 }
 
+function moveLessonToEmptySlot(state, sourceDateKey, sourceRowId, targetDateKey, targetRowId) {
+  if (!isValidISODate(sourceDateKey) || !isValidISODate(targetDateKey)) return { ok: false, reason: "日付が正しくありません。" };
+  const sourceRow = getRowDef(sourceRowId, state);
+  const targetRow = getRowDef(targetRowId, state);
+  if (!sourceRow || !targetRow || sourceRow.type !== "lesson" || targetRow.type !== "lesson") {
+    return { ok: false, reason: "授業のコマを選んでください。" };
+  }
+  if (sourceRow.period > state.settings.periodCount || targetRow.period > state.settings.periodCount ||
+      state.settings.visible[sourceRowId] === false || state.settings.visible[targetRowId] === false) {
+    return { ok: false, reason: "表示されている授業コマを選んでください。" };
+  }
+  if (!state.settings.weekdays.includes(fromISODate(targetDateKey).getDay())) {
+    return { ok: false, reason: "移動先の曜日は週案に表示されていません。" };
+  }
+  if (sourceDateKey === targetDateKey && sourceRowId === targetRowId) {
+    return { ok: false, reason: "移動元と同じコマです。" };
+  }
+  if (getAnnualHolidayForDate(state, targetDateKey)) return { ok: false, reason: "祝日には移動できません。" };
+
+  const source = getCell(state, sourceDateKey, sourceRowId);
+  if (source.absent || !(source.subject || String(source.unit || "").trim() || String(source.note || "").trim())) {
+    return { ok: false, reason: "移動元に授業内容がありません。" };
+  }
+  const target = getCell(state, targetDateKey, targetRowId);
+  if (target.absent || target.subject || String(target.unit || "").trim() || String(target.note || "").trim()) {
+    return { ok: false, reason: "移動先は空いているコマを選んでください。既存の入力は変更していません。" };
+  }
+
+  target.subject = source.subject;
+  target.unit = source.unit;
+  target.note = source.note;
+  target.absent = false;
+  source.subject = "";
+  source.unit = "";
+  source.note = "";
+  source.absent = false;
+  return { ok: true, sourceDateKey: sourceDateKey, sourceRowId: sourceRowId, targetDateKey: targetDateKey, targetRowId: targetRowId };
+}
+
 function removeCell(state, dateKey, rowId) {
   if (state.cells[dateKey]) delete state.cells[dateKey][rowId];
 }
@@ -545,6 +584,7 @@ window.WEEKLY_PLAN = {
   setCell,
   fillEmptyLessonSlots,
   copyPreviousWeekLessons,
+  moveLessonToEmptySlot,
   removeCell,
   getVisibleRows,
   getSubject,

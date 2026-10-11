@@ -322,3 +322,32 @@ test("monthly and school-year counts include saved weeks and exclude absences an
   assert.equal(yearToDate["理科"], 1);
   assert.equal(yearToDate["社会"], undefined);
 });
+
+
+test("moving a lesson transfers its contents only to an empty visible slot", () => {
+  const context = makeContext();
+  const plan = context.WEEKLY_PLAN;
+  const state = plan.normalizeState({
+    version: 7,
+    meta: { weekStart: "2026-10-12" },
+    settings: { weekdays: [1, 2, 3], periodCount: 2, visible: { p1: true, p2: true } },
+    cells: {
+      "2026-10-12": { p1: { subject: "算数", unit: "分数", note: "復習する", absent: false } },
+      "2026-10-13": { p2: { subject: "国語", unit: "物語", note: "", absent: false } }
+    },
+    calendar: { annual: [{ id: "move-holiday", startDate: "2026-10-14", endDate: "2026-10-14", kind: "holiday", name: "祝日" }] }
+  });
+  const moved = plan.moveLessonToEmptySlot(state, "2026-10-12", "p1", "2026-10-13", "p1");
+  assert.equal(moved.ok, true);
+  assert.equal(plan.getCell(state, "2026-10-12", "p1").subject, "");
+  assert.equal(plan.getCell(state, "2026-10-13", "p1").subject, "算数");
+  assert.equal(plan.getCell(state, "2026-10-13", "p1").unit, "分数");
+  assert.equal(plan.getCell(state, "2026-10-13", "p1").note, "復習する");
+
+  const occupied = plan.moveLessonToEmptySlot(state, "2026-10-13", "p1", "2026-10-13", "p2");
+  assert.equal(occupied.ok, false);
+  assert.equal(plan.getCell(state, "2026-10-13", "p2").subject, "国語");
+  const holiday = plan.moveLessonToEmptySlot(state, "2026-10-13", "p1", "2026-10-14", "p1");
+  assert.equal(holiday.ok, false);
+  assert.equal(plan.getCell(state, "2026-10-13", "p1").subject, "算数");
+});

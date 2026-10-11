@@ -368,6 +368,14 @@ function renderSidebar(state, selected) {
   const lessonRows = WEEKLY_PLAN.ROW_DEFS.filter(function(row) {
     return row.type === "lesson" && row.period <= state.settings.periodCount && state.settings.visible[row.id] !== false;
   });
+  const moveDateDefault = dates.find(function(date) {
+    const key = WEEKLY_PLAN.toISODate(date);
+    return (!selected || key !== selected.dateKey) && !WEEKLY_PLAN.getAnnualHolidayForDate(state, key);
+  }) || dates[0];
+  const moveDateDefaultKey = moveDateDefault ? WEEKLY_PLAN.toISODate(moveDateDefault) : "";
+  const movePeriodDefault = dates.length <= 1
+    ? (lessonRows.find(function(row) { return !selected || row.id !== selected.rowId; }) || lessonRows[0])
+    : (lessonRows.find(function(row) { return selected && row.id === selected.rowId; }) || lessonRows[0]);
   let lessonSlots = 0, filledSlots = 0, noteCount = 0, holidayCount = 0;
   const weekEvents = [];
 
@@ -434,7 +442,16 @@ function renderSidebar(state, selected) {
       escapeHTML(currentAbsent ? "" : (current.note || "")) + '</textarea></label>' +
       '<label class="test-highlight-toggle"><input id="testHighlight" type="checkbox"><span>このコマを強調表示</span></label>' +
       '<div class="quick-tool-actions"><button type="button" class="secondary-button" id="copyUnitWeek">この単元名を同じ教科のコマへ反映</button>' +
-      '<button type="button" class="ghost-button block-button" id="clearCell">このコマをクリア</button></div>';
+      '<button type="button" class="ghost-button block-button" id="clearCell">このコマをクリア</button></div>' +
+      '<div class="lesson-move-tool"><div class="lesson-move-heading">授業を別のコマへ移動</div>' +
+      '<p>空いているコマへ移します。移動元の内容は移動先へ移り、移動元は空になります。</p>' +
+      '<label class="field"><span>移動先の曜日</span><select id="moveLessonDate">' +
+      dates.map(function(date) { const key = WEEKLY_PLAN.toISODate(date); return '<option value="' + key + '"' + (key === moveDateDefaultKey ? " selected" : "") + '>' + escapeHTML(formatJapaneseDate(date)) + '</option>'; }).join("") +
+      '</select></label>' +
+      '<label class="field"><span>移動先の時間目</span><select id="moveLessonPeriod">' +
+      lessonRows.map(function(row) { return '<option value="' + row.id + '"' + (movePeriodDefault && row.id === movePeriodDefault.id ? " selected" : "") + '>' + row.period + '時間目</option>'; }).join("") +
+      '</select></label>' +
+      '<button type="button" class="ghost-button block-button" id="moveLessonButton">このコマへ移動</button></div>';
   } else if (currentHoliday) {
     detail = '<div class="empty-selection compact holiday-side-card"><div class="selection-icon">休</div><div><h2>' +
       escapeHTML(currentHoliday.name) + '</h2><p>この日は休日です。授業時数にはカウントされません。</p></div></div>';

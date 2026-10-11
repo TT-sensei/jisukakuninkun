@@ -211,6 +211,23 @@ function copyUnitToSameSubject() {
   setSaveStatus(copied + "コマに単元名を反映しました");
 }
 
+function moveSelectedLesson() {
+  if (!selectedCell || selectedCell.dateKey === "__week__") return;
+  const targetDateKey = document.getElementById("moveLessonDate")?.value || "";
+  const targetRowId = document.getElementById("moveLessonPeriod")?.value || "";
+  const result = WEEKLY_PLAN.moveLessonToEmptySlot(
+    WEEKLY_STATE.state, selectedCell.dateKey, selectedCell.rowId, targetDateKey, targetRowId
+  );
+  if (!result.ok) {
+    alert(result.reason);
+    return;
+  }
+  selectedCell = { dateKey: result.targetDateKey, rowId: result.targetRowId };
+  WEEKLY_STATE.queueSave();
+  renderAllWithSelection();
+  setSaveStatus("授業を移動しました");
+}
+
 function copyPreviousWeekLessons() {
   const copied = WEEKLY_PLAN.copyPreviousWeekLessons(WEEKLY_STATE.state);
   if (!copied.length) {
@@ -544,6 +561,11 @@ function bindEditorEvents() {
 
     if (event.target.closest("#copyPreviousWeekLessons")) {
       copyPreviousWeekLessons();
+      return;
+    }
+
+    if (event.target.closest("#moveLessonButton")) {
+      moveSelectedLesson();
       return;
     }
 
