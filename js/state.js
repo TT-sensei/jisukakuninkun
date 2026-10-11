@@ -1,11 +1,30 @@
 const STORAGE_KEY = "tt-sensei-weekly-plan-v2";
 
 function loadLocalState() {
+  let raw = null;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? WEEKLY_PLAN.normalizeState(JSON.parse(raw)) : WEEKLY_PLAN.defaultState();
+    raw = localStorage.getItem(STORAGE_KEY);
+  } catch (error) {
+    console.warn("端末保存データを読み込めませんでした", error);
+    setSaveStatus("端末保存を利用できません");
+    return WEEKLY_PLAN.defaultState();
+  }
+
+  if (!raw) return WEEKLY_PLAN.defaultState();
+
+  try {
+    return WEEKLY_PLAN.normalizeState(JSON.parse(raw));
   } catch (error) {
     console.warn("週案データの読み込みに失敗しました", error);
+    // Keep a recovery copy before a later successful save replaces the damaged record.
+    try {
+      if (!localStorage.getItem(STORAGE_KEY + "-recovery")) {
+        localStorage.setItem(STORAGE_KEY + "-recovery", raw);
+      }
+    } catch (backupError) {
+      console.warn("週案データの復旧用コピーを保存できませんでした", backupError);
+    }
+    setSaveStatus("保存データに問題があります（復旧用コピーを確認してください）");
     return WEEKLY_PLAN.defaultState();
   }
 }
