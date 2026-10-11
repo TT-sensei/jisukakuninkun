@@ -420,6 +420,16 @@ function renderSidebar(state, selected) {
       '<div class="dashboard-progress-note"><span>' + filledSlots + ' / ' + lessonSlots + ' コマ入力済み</span><span>' +
       (holidayCount ? holidayCount + '日休み' : '休日なし') + '・' + noteCount + '件の授業メモ</span></div></section>' +
 
+    '<section class="dashboard-section bulk-unit-card"><div class="dashboard-section-head"><div><span class="eyebrow">QUICK PLAN</span><h3>単元をまとめて配置</h3></div></div>' +
+      '<p class="dashboard-empty">今週の空いているコマに、選んだ教科と単元名を順番に入れます。入力済みのコマは変更しません。</p>' +
+      '<label class="field"><span>教科</span><select id="bulkUnitSubject"><option value="">教科を選択</option>' +
+        WEEKLY_PLAN.SUBJECTS.map(function(subject) { return '<option value="' + escapeHTML(subject.id) + '">' + escapeHTML(subject.label) + '</option>'; }).join("") +
+      '</select></label>' +
+      '<label class="field"><span>単元名</span><input id="bulkUnitName" type="text" list="unitSuggestions" placeholder="例：分数のわり算"></label>' +
+      '<label class="field"><span>配置するコマ数</span><input id="bulkUnitCount" type="number" min="1" max="40" step="1" value="5"></label>' +
+      '<button type="button" class="secondary-button dashboard-action" id="bulkUnitPlace">空いているコマに配置</button>' +
+      '<p class="dashboard-settings-note">月曜から順に、表示中の授業コマを確認します。足りない場合は配置できた分だけ反映します。</p></section>' +
+
     '<section class="dashboard-section"><div class="dashboard-section-head"><div><span class="eyebrow">SUBJECT HOURS</span><h3>教科別の時数</h3></div><span class="dashboard-count-total">' +
       total + '時間</span></div><div class="dashboard-subject-grid">' + (subjects || '<span class="count-empty">教科を入力すると、ここに集計されます</span>') + '</div></section>' +
 
