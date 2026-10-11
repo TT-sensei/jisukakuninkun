@@ -746,3 +746,70 @@ test("side-panel subject choice preserves the grid and focuses the unit editor",
   assert.equal(previewRenders, 1, "absence should re-render because the cell layout changes");
   assert.equal(sideUnit.focused, false);
 });
+
+
+test("bulk unit update replaces every matching subject in the current week only", () => {
+  const context = makeContext();
+  vm.runInContext(read("js/state.js"), context, { filename: "js/state.js" });
+  vm.runInContext(read("js/render.js"), context, { filename: "js/render.js" });
+  vm.runInContext(read("js/editor.js"), context, { filename: "js/editor.js" });
+  const plan = context.WEEKLY_PLAN;
+  const state = plan.normalizeState({
+    version: 7,
+    meta: { weekStart: "2026-10-12" },
+    settings: {
+      weekdays: [1, 2, 3],
+      periodCount: 2,
+      visible: { p1: true, p2: true },
+      customRows: [],
+      rowOrder: plan.ROW_DEFS.map(row => row.id)
+    },
+    cells: {
+      "2026-10-12": {
+        p1: { subject: "算数", unit: "分数", note: "残すメモ", absent: false },
+        p2: { subject: "国語", unit: "物語", note: "", absent: false }
+      },
+      "2026-10-13": {
+        p1: { subject: "算数", unit: "割合", note: "", absent: false },
+        p2: { subject: "", unit: "", note: "", absent: true }
+      },
+      "2026-10-14": {
+        p1: { subject: "理科", unit: "水のすがた", note: "", absent: false },
+        p2: { subject: "算数", unit: "小数", note: "", absent: false }
+      }
+    },
+    calendar: { annual: [{ id: "holiday-test", startDate: "2026-10-14", endDate: "2026-10-14", kind: "holiday", name: "祝日" }] }
+  });
+
+  let queued = 0;
+  let rerenders = 0;
+  let confirmation = "";
+  const controls = {
+    bulkUnitSubject: { value: "算数" },
+    bulkUnitName: { value: "分数のわり算" }
+  };
+  context.document.getElementById = (id) => controls[id] || null;
+  context.WEEKLY_STATE = { state, queueSave() { queued += 1; } };
+  context.WEEKLY_RENDER = {
+    renderSummary() {},
+    renderSidebar() {},
+    updatePrintLessonView() {}
+  };
+  context.confirm = (message) => { confirmation = message; return true; };
+  context.window.confirm = context.confirm;
+  context.renderAllWithSelection = () => { rerenders += 1; };
+  context.setSaveStatus = () => {};
+
+  context.placeBulkUnit();
+
+  assert.match(confirmation, /算数 2コマ/);
+  assert.match(confirmation, /上書き/);
+  assert.equal(plan.getCell(state, "2026-10-12", "p1").unit, "分数のわり算");
+  assert.equal(plan.getCell(state, "2026-10-13", "p1").unit, "分数のわり算");
+  assert.equal(plan.getCell(state, "2026-10-12", "p1").note, "残すメモ");
+  assert.equal(plan.getCell(state, "2026-10-12", "p2").unit, "物語", "other subjects must not change");
+  assert.equal(plan.getCell(state, "2026-10-14", "p2").unit, "小数", "holiday lessons must not change");
+  assert.equal(plan.getCell(state, "2026-10-13", "p2").absent, true, "absence cells must not change");
+  assert.equal(queued, 1);
+  assert.equal(rerenders, 1);
+});
