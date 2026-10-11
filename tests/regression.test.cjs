@@ -506,7 +506,9 @@ test("Enter navigation advances cells while preserving IME conversion behavior",
       dataset: { date, rowId },
       classList: { remove() {}, add() {} },
       querySelector(selector) {
-        if (selector.includes(".inline-subject, .inline-text, .inline-unit")) return this.field;
+        if (selector === ".inline-subject, .inline-text, .inline-unit") return this.field;
+        if (selector === ".inline-unit, .inline-text") return this.field;
+        if (selector === ".inline-subject") return this.subjectField;
         return null;
       }
     };
@@ -519,7 +521,13 @@ test("Enter navigation advances cells while preserving IME conversion behavior",
       select() { this.selected = true; },
       closest(selector) { return selector === ".plan-cell" ? cell : null; }
     };
+    const subjectField = {
+      focused: false,
+      focus() { this.focused = true; },
+      closest(selector) { return selector === ".plan-cell" ? cell : null; }
+    };
     cell.field = field;
+    cell.subjectField = subjectField;
     cells.push(cell);
     return cell;
   };
@@ -552,6 +560,7 @@ test("Enter navigation advances cells while preserving IME conversion behavior",
   assert.equal(prevented, true);
   assert.equal(secondCell.field.focused, true);
   assert.equal(secondCell.field.selected, true);
+  assert.equal(secondCell.subjectField.focused, false, "navigation should focus the editable unit field, not stop at the subject dropdown");
   assert.equal(settingsPanel.scrollTop, 0, "selecting a cell should return the workbench to the editor at the top");
   assert.equal(context.WEEKLY_EDITOR.getSelectedCell().dateKey, "2026-10-13");
   assert.equal(context.WEEKLY_EDITOR.getSelectedCell().rowId, "p1");
