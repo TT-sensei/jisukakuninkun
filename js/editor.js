@@ -527,8 +527,13 @@ function bindEditorEvents() {
     }
 
     if (target.id === "metaWeekStart") {
+      if (!target.value) {
+        // An empty date input must not silently jump the plan back to 1969.
+        target.value = WEEKLY_STATE.state.meta.weekStart;
+        return;
+      }
       WEEKLY_STATE.setWeekStart(target.value);
-      renderAllWithSelection();
+      clearSelection();
       renderSettingsModalSafe();
       return;
     }
