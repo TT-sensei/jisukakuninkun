@@ -45,7 +45,9 @@ function applyPreviewZoom(value) {
   if (output) output.value = zoom + "%";
   if (output) output.textContent = zoom + "%";
 
-  localStorage.setItem("tt-sensei-weekly-plan-preview-zoom", String(zoom));
+  if (!document.body.classList.contains("share-view")) {
+    localStorage.setItem("tt-sensei-weekly-plan-preview-zoom", String(zoom));
+  }
 }
 
 function bindPreviewZoom() {
@@ -139,8 +141,22 @@ function bindAppEvents() {
 
 function startApp() {
   const shareMode = WEEKLY_SHARE.loadShareStateFromURL();
-  if (shareMode === "view") document.body.classList.add("share-view");
-  if (shareMode !== "view") WEEKLY_EDITOR.bindEditorEvents();
+
+  if (shareMode === "view") {
+    // A shared URL is a read-only preview. Do not bind editing, import, reset,
+    // timetable, Drive, or week-navigation actions in this mode.
+    document.body.classList.add("share-view");
+    const printButton = document.getElementById("printButton");
+    if (printButton) {
+      printButton.addEventListener("click", function() {
+        window.print();
+      });
+    }
+    renderApp();
+    return;
+  }
+
+  WEEKLY_EDITOR.bindEditorEvents();
   WEEKLY_TIMETABLE.bindTimetableEvents();
   WEEKLY_FILE.bindFileEvents();
   WEEKLY_SHARE.bindShareEvents();
