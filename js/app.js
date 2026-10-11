@@ -30,8 +30,12 @@ function updateHeader() {
 }
 
 function getPreviewZoom() {
-  const raw = Number(localStorage.getItem("tt-sensei-weekly-plan-preview-zoom"));
-  return Number.isFinite(raw) && raw >= 70 && raw <= 110 ? raw : 82;
+  try {
+    const raw = Number(localStorage.getItem("tt-sensei-weekly-plan-preview-zoom"));
+    return Number.isFinite(raw) && raw >= 70 && raw <= 110 ? raw : 82;
+  } catch (error) {
+    return 82;
+  }
 }
 
 function applyPreviewZoom(value) {
