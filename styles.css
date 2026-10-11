@@ -1895,8 +1895,7 @@ button { cursor: pointer; }
   }
 
   .holiday-band {
-    --holiday-band-height: 175mm !important;
-    height: var(--holiday-band-height);
+    height: var(--holiday-band-height, 360px);
     background: rgb(246 246 246 / 92%);
     border-color: #777;
     -webkit-print-color-adjust: exact;
@@ -2026,8 +2025,7 @@ button { cursor: pointer; }
   }
 
   .holiday-band {
-    --holiday-band-height: 170mm !important;
-    height: var(--holiday-band-height);
+    height: var(--holiday-band-height, 360px);
   }
 }
 
@@ -2263,5 +2261,64 @@ body.share-view #planPreview .notice-footer-body {
     border: 0;
     box-shadow: none;
     padding: 0;
+  }
+}
+
+
+/* Print reliability: allow long weekly plans to flow across A4 pages. */
+@media print {
+  .print-sheet {
+    box-sizing: border-box;
+    width: 100%;
+    max-height: none !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .table-wrap {
+    overflow: visible !important;
+  }
+
+  .weekly-table {
+    width: 100%;
+    min-width: 0;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .weekly-table thead {
+    display: table-header-group;
+  }
+
+  .weekly-table tfoot {
+    display: table-footer-group;
+  }
+
+  .weekly-table tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .inline-lesson {
+    display: none !important;
+  }
+
+  .notice-footer {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .notice-board-head {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .notice-footer-body {
+    orphans: 2;
+    widows: 2;
+  }
+
+  .holiday-band {
+    height: var(--holiday-band-height, 360px);
   }
 }
