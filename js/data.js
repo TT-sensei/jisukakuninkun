@@ -294,9 +294,10 @@ function createLessonCell(subject = "", unit = "", note = "", absent = false) {
 function normalizeCellForRow(row, value) {
   const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
   if (row.type === "lesson") {
+    const subject = String(source.subject || "");
     return {
       kind: "lesson",
-      subject: String(source.subject || ""),
+      subject: SUBJECTS.some(function(item) { return item.id === subject; }) ? subject : "",
       unit: String(source.unit || ""),
       note: String(source.note || ""),
       absent: !!source.absent
