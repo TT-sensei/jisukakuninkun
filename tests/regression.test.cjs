@@ -491,3 +491,74 @@ test("desktop-first workspace keeps core control IDs and loads its layout layer 
   assert.match(editor, /data-dashboard-tab/);
   assert.match(app, /importGroup\.insertBefore\(button, importButton\)/);
 });
+
+
+test("Enter navigation advances cells while preserving IME conversion behavior", () => {
+  const context = makeContext();
+  const listeners = {};
+  const editorPanel = { dataset: {}, querySelectorAll() { return []; } };
+  const cells = [];
+  const makeCell = (date, rowId) => {
+    const cell = {
+      dataset: { date, rowId },
+      classList: { remove() {}, add() {} },
+      querySelector(selector) {
+        if (selector.includes(".inline-subject, .inline-text, .inline-unit")) return this.field;
+        return null;
+      }
+    };
+    const field = {
+      focused: false,
+      selected: false,
+      dataset: {},
+      matches(selector) { return selector.includes(".inline-unit") || selector.includes(".inline-text"); },
+      focus() { this.focused = true; },
+      select() { this.selected = true; },
+      closest(selector) { return selector === ".plan-cell" ? cell : null; }
+    };
+    cell.field = field;
+    cells.push(cell);
+    return cell;
+  };
+  const firstCell = makeCell("2026-10-12", "p1");
+  const secondCell = makeCell("2026-10-13", "p1");
+  const thirdCell = makeCell("2026-10-14", "p1");
+
+  context.document.getElementById = (id) => id === "editorPanel" ? editorPanel : null;
+  context.document.querySelectorAll = () => cells;
+  context.document.querySelector = () => null;
+  context.document.addEventListener = (type, handler) => { listeners[type] = handler; };
+  context.CSS = { escape: (value) => value };
+  context.WEEKLY_STATE = { state: {} };
+  context.WEEKLY_RENDER = { renderSidebar() {}, renderPreview() {} };
+  vm.runInContext(read("js/editor.js"), context, { filename: "js/editor.js" });
+  context.WEEKLY_EDITOR.bindEditorEvents();
+
+  let prevented = false;
+  listeners.keydown({
+    key: "Enter", isComposing: true, keyCode: 229, shiftKey: false,
+    target: firstCell.field, preventDefault() { prevented = true; }
+  });
+  assert.equal(prevented, false, "IME conversion Enter must not be intercepted");
+  assert.equal(secondCell.field.focused, false);
+
+  listeners.keydown({
+    key: "Enter", isComposing: false, keyCode: 13, shiftKey: false,
+    target: firstCell.field, preventDefault() { prevented = true; }
+  });
+  assert.equal(prevented, true);
+  assert.equal(secondCell.field.focused, true);
+  assert.equal(secondCell.field.selected, true);
+  assert.equal(context.WEEKLY_EDITOR.getSelectedCell().dateKey, "2026-10-13");
+  assert.equal(context.WEEKLY_EDITOR.getSelectedCell().rowId, "p1");
+
+  prevented = false;
+  listeners.keydown({
+    key: "Enter", isComposing: false, keyCode: 13, shiftKey: true,
+    target: thirdCell.field, preventDefault() { prevented = true; }
+  });
+  assert.equal(prevented, true);
+  assert.equal(secondCell.field.focused, true);
+  assert.equal(context.WEEKLY_EDITOR.getSelectedCell().dateKey, "2026-10-13");
+  assert.equal(context.WEEKLY_EDITOR.getSelectedCell().rowId, "p1");
+});

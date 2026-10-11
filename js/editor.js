@@ -754,6 +754,30 @@ function renderSettingsModalSafe() {
   WEEKLY_RENDER.renderSettingsModal(WEEKLY_STATE.state);
 }
 
+function moveToAdjacentPlanCell(element, direction) {
+  const currentCell = element && element.closest(".plan-cell");
+  if (!currentCell) return false;
+
+  const cells = Array.from(document.querySelectorAll(".plan-cell[data-date][data-row-id]")).filter(function(cell) {
+    return !!cell.querySelector(".inline-subject, .inline-text, .inline-unit");
+  });
+  const currentIndex = cells.indexOf(currentCell);
+  if (currentIndex < 0) return false;
+
+  const nextCell = cells[currentIndex + direction];
+  if (!nextCell) return false;
+
+  const nextField = nextCell.querySelector(".inline-subject, .inline-text, .inline-unit");
+  if (!nextField) return false;
+
+  selectCell(nextCell.dataset.date, nextCell.dataset.rowId);
+  nextField.focus();
+  if (nextField.matches(".inline-unit, .inline-text") && typeof nextField.select === "function") {
+    nextField.select();
+  }
+  return true;
+}
+
 function bindEditorEvents() {
   document.addEventListener("click", function(event) {
     const dashboardTab = event.target.closest("[data-dashboard-tab]");
@@ -907,6 +931,15 @@ function bindEditorEvents() {
       saveAnnualEntry(annualSave.dataset.annualSave);
       return;
     }
+  });
+
+  document.addEventListener("keydown", function(event) {
+    const target = event.target;
+    // Do not intercept Enter while a Japanese IME is confirming a conversion.
+    if (event.key !== "Enter" || event.isComposing || event.keyCode === 229) return;
+    if (!target || !target.matches(".inline-unit, .inline-text")) return;
+    const moved = moveToAdjacentPlanCell(target, event.shiftKey ? -1 : 1);
+    if (moved) event.preventDefault();
   });
 
   document.addEventListener("input", function(event) {
