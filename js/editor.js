@@ -378,7 +378,7 @@ async function importNationalHolidays() {
       if (dateYear !== schoolYear && dateYear !== schoolYear + 1) return;
       const month = Number(date.slice(5, 7));
       if ((dateYear === schoolYear && month < 4) || (dateYear === schoolYear + 1 && month >= 4)) return;
-      if (existingHolidayDates.has(date)) return;
+      if (WEEKLY_PLAN.getAnnualHolidayForDate(WEEKLY_STATE.state, date)) return;
       imported.push(WEEKLY_PLAN.createAnnualEntry({
         startDate: date,
         endDate: date,
