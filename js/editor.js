@@ -211,6 +211,32 @@ function copyUnitToSameSubject() {
   setSaveStatus(copied + "コマに単元名を反映しました");
 }
 
+function placeBulkUnit() {
+  const subject = document.getElementById("bulkUnitSubject")?.value || "";
+  const unit = (document.getElementById("bulkUnitName")?.value || "").trim();
+  const countInput = document.getElementById("bulkUnitCount");
+  const requested = Math.max(1, Math.min(40, Math.floor(Number(countInput?.value) || 1)));
+  if (!subject) {
+    alert("教科を選択してください。");
+    return;
+  }
+  if (!unit) {
+    alert("単元名を入力してください。");
+    return;
+  }
+  const placed = WEEKLY_PLAN.fillEmptyLessonSlots(WEEKLY_STATE.state, subject, unit, requested);
+  if (!placed.length) {
+    alert("配置できる空きコマがありません。既存の入力は変更していません。");
+    return;
+  }
+  WEEKLY_STATE.queueSave();
+  renderAllWithSelection();
+  setSaveStatus(placed.length + "コマに単元を配置しました");
+  if (placed.length < requested) {
+    alert("空いているコマが" + placed.length + "コマだったため、配置できた分だけ反映しました。既存の入力は変更していません。");
+  }
+}
+
 function updateSideLessonField(field, value) {
   if (!selectedCell || selectedCell.dateKey === "__week__") return;
   const row = WEEKLY_PLAN.getRowDef(selectedCell.rowId);
@@ -497,6 +523,11 @@ function bindEditorEvents() {
 
     if (event.target.closest("#copyUnitWeek")) {
       copyUnitToSameSubject();
+      return;
+    }
+
+    if (event.target.closest("#bulkUnitPlace")) {
+      placeBulkUnit();
       return;
     }
 
