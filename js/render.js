@@ -376,7 +376,7 @@ function renderSummary(state) {
 function renderSidebar(state, selected) {
   const target = document.getElementById("editorPanel");
   if (!target) return;
-  const activePane = ["input", "hours", "schedule", "settings"].includes(target.dataset.activePane)
+  const activePane = ["input", "bulk", "hours", "schedule", "settings"].includes(target.dataset.activePane)
     ? target.dataset.activePane
     : "input";
   target.dataset.activePane = activePane;
@@ -493,7 +493,8 @@ function renderSidebar(state, selected) {
       '<div class="dashboard-progress-note"><span>' + filledSlots + ' / ' + lessonSlots + ' コマ入力済み</span><span>' +
       (holidayCount ? holidayCount + '日休み' : '休日なし') + '・' + noteCount + '件の授業メモ</span></div></section>' +
     '<nav class="dashboard-tabs" aria-label="便利機能の表示">' +
-      '<button type="button" class="dashboard-tab" data-dashboard-tab="input" aria-pressed="false">入力</button>' +
+      '<button type="button" class="dashboard-tab" data-dashboard-tab="input" aria-pressed="false">授業入力</button>' +
+      '<button type="button" class="dashboard-tab" data-dashboard-tab="bulk" aria-pressed="false">一括入力</button>' +
       '<button type="button" class="dashboard-tab" data-dashboard-tab="hours" aria-pressed="false">時数</button>' +
       '<button type="button" class="dashboard-tab" data-dashboard-tab="schedule" aria-pressed="false">予定</button>' +
       '<button type="button" class="dashboard-tab" data-dashboard-tab="settings" aria-pressed="false">保存・設定</button>' +
@@ -502,7 +503,7 @@ function renderSidebar(state, selected) {
     '<section class="selection-card convenience-card dashboard-detail" data-dashboard-group="input"><div class="selection-card-head"><div><span class="eyebrow">QUICK TOOLS</span><h2>選択中のコマ</h2></div></div>' +
       detail + '</section>' +
 
-    '<section class="dashboard-section bulk-unit-card" data-dashboard-group="input"><div class="dashboard-section-head"><div><span class="eyebrow">QUICK PLAN</span><h3>単元をまとめて配置</h3></div></div>' +
+    '<section class="dashboard-section bulk-unit-card" data-dashboard-group="bulk"><div class="dashboard-section-head"><div><span class="eyebrow">QUICK PLAN</span><h3>単元をまとめて配置</h3></div></div>' +
       '<p class="dashboard-empty">今週の空いているコマに、選んだ教科と単元名を順番に入れます。入力済みのコマは変更しません。</p>' +
       '<label class="field"><span>教科</span><select id="bulkUnitSubject"><option value="">教科を選択</option>' +
         WEEKLY_PLAN.SUBJECTS.map(function(subject) { return '<option value="' + escapeHTML(subject.id) + '">' + escapeHTML(subject.label) + '</option>'; }).join("") +
