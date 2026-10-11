@@ -50,7 +50,11 @@ function applyPreviewZoom(value) {
   if (output) output.textContent = zoom + "%";
 
   if (!document.body.classList.contains("share-view")) {
-    localStorage.setItem("tt-sensei-weekly-plan-preview-zoom", String(zoom));
+    try {
+      localStorage.setItem("tt-sensei-weekly-plan-preview-zoom", String(zoom));
+    } catch (error) {
+      // Preview zoom is a convenience preference; storage failure must not break editing.
+    }
   }
 }
 
