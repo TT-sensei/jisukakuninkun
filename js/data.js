@@ -307,7 +307,7 @@ function normalizeCellForRow(row, value) {
     const time = String(source.time || "");
     return {
       kind: "time",
-      time: /^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(time) ? time : ""
+      time: /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time) ? time : ""
     };
   }
   return { kind: "text", text: String(source.text || "") };
