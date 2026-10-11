@@ -89,18 +89,29 @@ function updateInlineSubject(element) {
   const cellEl = element.closest(".plan-cell");
   if (!cellEl) return;
 
-  const cell = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, cellEl.dataset.date, cellEl.dataset.rowId);
+  const dateKey = cellEl.dataset.date;
+  const rowId = cellEl.dataset.rowId;
+  const cell = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, dateKey, rowId);
+
   if (element.value === "__absent__") {
     cell.absent = true;
     cell.subject = "";
     cell.unit = "";
     cell.note = "";
-  } else {
-    cell.absent = false;
-    cell.subject = element.value;
+    WEEKLY_STATE.queueSave();
+    // Absence changes the cell structure, so replace its editor with the read-only absence display.
+    renderAllWithSelection();
+    return;
   }
+
+  cell.absent = false;
+  cell.subject = element.value;
   WEEKLY_STATE.queueSave();
-  renderAllWithSelection();
+
+  // Update the print representation and counts in place. Rebuilding the whole table here
+  // would remove focus from the subject selector and slow down keyboard-driven data entry.
+  WEEKLY_RENDER.updatePrintLessonView(cellEl, cell);
+  selectCell(dateKey, rowId);
   WEEKLY_RENDER.renderSummary(WEEKLY_STATE.state);
 }
 
