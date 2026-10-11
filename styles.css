@@ -2198,3 +2198,70 @@ body.share-view .plan-cell.test-highlight {
     ) !important;
   }
 }
+
+
+/* 共有URLは閲覧専用。編集・設定・読み込み操作を画面から隠す。 */
+body.share-view .header-actions > :not(#printButton),
+body.share-view .week-nav button,
+body.share-view .settings-panel,
+body.share-view .preview-tools,
+body.share-view .preview-top p {
+  display: none !important;
+}
+
+body.share-view .app-header {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+body.share-view .header-actions {
+  display: flex;
+  justify-self: end;
+}
+
+body.share-view .workspace {
+  display: block;
+  width: min(1800px, calc(100% - 28px));
+}
+
+body.share-view .preview-panel {
+  width: 100%;
+}
+
+body.share-view #planPreview {
+  pointer-events: auto;
+  user-select: text;
+}
+
+body.share-view #planPreview .inline-edit,
+body.share-view #planPreview .inline-notice,
+body.share-view #planPreview .notice-board-action,
+body.share-view #planPreview .annual-derived {
+  display: none !important;
+}
+
+body.share-view #planPreview .print-lesson,
+body.share-view #planPreview .print-text,
+body.share-view #planPreview .print-time,
+body.share-view #planPreview .notice-footer-body {
+  display: block !important;
+  visibility: visible !important;
+}
+
+@media print {
+  body.share-view .app-header {
+    display: none !important;
+  }
+
+  body.share-view .workspace {
+    width: 100%;
+    margin: 0;
+  }
+
+  body.share-view .preview-panel {
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+}

@@ -58,6 +58,16 @@ function toISODate(date) {
   return `${y}-${m}-${day}`;
 }
 
+function isValidISODate(value) {
+  const text = String(value || "");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return false;
+  const parts = text.split("-").map(Number);
+  const date = new Date(parts[0], parts[1] - 1, parts[2]);
+  return date.getFullYear() === parts[0] &&
+    date.getMonth() === parts[1] - 1 &&
+    date.getDate() === parts[2];
+}
+
 function fromISODate(value) {
   const [y, m, d] = String(value).split("-").map(Number);
   return new Date(y, (m || 1) - 1, d || 1);
@@ -171,15 +181,16 @@ function normalizeState(raw) {
       : makeTimetableTemplate(),
     calendar: {
       annual: Array.isArray(source.calendar && source.calendar.annual)
-        ? source.calendar.annual.map(function(entry) {
-            const startDate = normalizeAnnualDate(entry.startDate || entry.date);
-            const endDate = normalizeAnnualDate(entry.endDate || entry.startDate || entry.date) || startDate;
+        ? source.calendar.annual.map(function(entry, index) {
+            const item = entry && typeof entry === "object" && !Array.isArray(entry) ? entry : {};
+            const startDate = normalizeAnnualDate(item.startDate || item.date);
+            const endDate = normalizeAnnualDate(item.endDate || item.startDate || item.date) || startDate;
             return {
-              id: String(entry.id || ""),
+              id: String(item.id || ("annual-import-" + startDate + "-" + index)),
               startDate,
               endDate: endDate && endDate >= startDate ? endDate : startDate,
-              kind: entry.kind === "holiday" ? "holiday" : "event",
-              name: String(entry.name || entry.eventName || "").trim()
+              kind: item.kind === "holiday" ? "holiday" : "event",
+              name: String(item.name || item.eventName || "").trim()
             };
           }).filter(function(entry) {
             return entry.name && entry.startDate;
@@ -190,7 +201,17 @@ function normalizeState(raw) {
 
   state.version = WEEKLY_PLAN_VERSION;
 
-  state.meta.weekStart = toISODate(getMonday(fromISODate(state.meta.weekStart || base.meta.weekStart)));
+  // Annual event IDs must be unique; duplicates otherwise make deleting one event delete several.
+  const annualIds = new Set();
+  state.calendar.annual.forEach(function(entry, index) {
+    if (!entry.id || annualIds.has(entry.id)) {
+      entry.id = "annual-import-" + (entry.startDate || "unknown") + "-" + index;
+    }
+    annualIds.add(entry.id);
+  });
+
+  const requestedWeekStart = isValidISODate(state.meta.weekStart) ? state.meta.weekStart : base.meta.weekStart;
+  state.meta.weekStart = toISODate(getMonday(fromISODate(requestedWeekStart)));
   state.settings.weekdays = (Array.isArray(state.settings.weekdays) ? state.settings.weekdays : [1,2,3,4,5])
     .map(Number)
     .filter(n => n >= 0 && n <= 6)
@@ -229,22 +250,29 @@ function normalizeState(raw) {
   }
   state.meta.notice = "";
 
-  // 欠課フラグを正規化（旧データは通常授業として扱う）
+  // セルの型を正規化する。破損・古いJSON内の文字列やnullが編集処理を壊さないようにする。
   Object.keys(state.cells).forEach(function(dateKey) {
-    const day = state.cells[dateKey];
-    if (!day || typeof day !== "object") return;
-    Object.keys(day).forEach(function(rowId) {
-      const row = getRowDef(rowId);
-      if (row && row.type === "lesson" && day[rowId] && typeof day[rowId] === "object") {
-        day[rowId].absent = !!day[rowId].absent;
+    if (!isValidISODate(dateKey)) {
+      delete state.cells[dateKey];
+      return;
+    }
+    const rawDay = state.cells[dateKey];
+    const day = rawDay && typeof rawDay === "object" && !Array.isArray(rawDay) ? rawDay : {};
+    ROW_DEFS.forEach(function(row) {
+      if (Object.prototype.hasOwnProperty.call(day, row.id)) {
+        day[row.id] = normalizeCellForRow(row, day[row.id]);
       }
     });
+    state.cells[dateKey] = day;
   });
 
   for (let day = 0; day <= 6; day += 1) {
     if (!state.timetable[day] || typeof state.timetable[day] !== "object") state.timetable[day] = {};
     for (let period = 1; period <= 8; period += 1) {
-      state.timetable[day][period] = state.timetable[day][period] || "";
+      const subject = String(state.timetable[day][period] || "");
+      state.timetable[day][period] = SUBJECTS.some(function(item) { return item.id === subject; })
+        ? subject
+        : "";
     }
   }
 
@@ -261,6 +289,28 @@ function normalizeState(raw) {
 
 function createLessonCell(subject = "", unit = "", note = "", absent = false) {
   return { kind: "lesson", subject, unit, note, absent: !!absent };
+}
+
+function normalizeCellForRow(row, value) {
+  const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  if (row.type === "lesson") {
+    const subject = String(source.subject || "");
+    return {
+      kind: "lesson",
+      subject: SUBJECTS.some(function(item) { return item.id === subject; }) ? subject : "",
+      unit: String(source.unit || ""),
+      note: String(source.note || ""),
+      absent: !!source.absent
+    };
+  }
+  if (row.type === "time") {
+    const time = String(source.time || "");
+    return {
+      kind: "time",
+      time: /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time) ? time : ""
+    };
+  }
+  return { kind: "text", text: String(source.text || "") };
 }
 
 function createTextCell(text = "") {
@@ -291,18 +341,28 @@ function getRowDef(rowId) {
 }
 
 function getCell(state, dateKey, rowId) {
-  const day = state.cells[dateKey] || (state.cells[dateKey] = {});
+  if (!state.cells || typeof state.cells !== "object" || Array.isArray(state.cells)) state.cells = {};
+  const currentDay = state.cells[dateKey];
+  const day = currentDay && typeof currentDay === "object" && !Array.isArray(currentDay)
+    ? currentDay
+    : (state.cells[dateKey] = {});
   const row = getRowDef(rowId);
   const existing = day[rowId];
-  if (existing) return existing;
 
-  let created;
-  if (row && row.type === "lesson") created = createLessonCell();
-  else if (row && row.type === "time") created = createTimeCell();
-  else created = createTextCell();
-
-  day[rowId] = created;
-  return created;
+  if (row) {
+    if (!existing || typeof existing !== "object" || Array.isArray(existing)) {
+      day[rowId] = normalizeCellForRow(row, null);
+    } else {
+      const normalized = normalizeCellForRow(row, existing);
+      Object.keys(existing).forEach(function(key) { delete existing[key]; });
+      Object.assign(existing, normalized);
+      day[rowId] = existing;
+    }
+    return day[rowId];
+  }
+  if (existing && typeof existing === "object" && !Array.isArray(existing)) return existing;
+  day[rowId] = createTextCell();
+  return day[rowId];
 }
 
 function setCell(state, dateKey, rowId, cell) {
@@ -330,7 +390,7 @@ function getSubject(subjectId) {
 
 function normalizeAnnualDate(value) {
   const text = String(value || "");
-  return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : "";
+  return isValidISODate(text) ? text : "";
 }
 
 function getAnnualEntriesForDate(state, dateKey) {
@@ -382,6 +442,7 @@ window.WEEKLY_PLAN = {
   ROW_DEFS,
   DEFAULT_LABELS,
   toISODate,
+  isValidISODate,
   fromISODate,
   getMonday,
   getWeekDates,

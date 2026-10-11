@@ -18,20 +18,72 @@ function exportWeeklyPlan() {
   setSaveStatus("書き出しました");
 }
 
+function isPlainObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function validateWeeklyPlanImport(data) {
+  if (!isPlainObject(data)) throw new Error("データ全体がオブジェクトではありません。");
+  if (data.version !== undefined &&
+      (!Number.isFinite(Number(data.version)) || Number(data.version) > WEEKLY_PLAN.WEEKLY_PLAN_VERSION)) {
+    throw new Error("このアプリより新しい形式の週案ファイルは読み込めません。");
+  }
+  if (!isPlainObject(data.meta)) throw new Error("週案の基本情報がありません。");
+  if (!WEEKLY_PLAN.isValidISODate(data.meta.weekStart)) {
+    throw new Error("週の開始日が見つからないか、形式が正しくありません。");
+  }
+  if (!isPlainObject(data.cells)) throw new Error("授業データがありません。");
+
+  const dateKeys = Object.keys(data.cells);
+  const hasDate = dateKeys.some(function(key) {
+    return WEEKLY_PLAN.isValidISODate(key) && isPlainObject(data.cells[key]);
+  });
+  if (!hasDate) throw new Error("読み込める日付別の週案データがありません。");
+
+  if (data.settings !== undefined && !isPlainObject(data.settings)) {
+    throw new Error("表示設定の形式が正しくありません。");
+  }
+  if (data.timetable !== undefined && !isPlainObject(data.timetable)) {
+    throw new Error("時間割データの形式が正しくありません。");
+  }
+  if (data.calendar !== undefined && !isPlainObject(data.calendar)) {
+    throw new Error("年間予定データの形式が正しくありません。");
+  }
+}
+
 function importWeeklyPlanFile(file) {
   if (!file) return;
+  if (file.size > 10 * 1024 * 1024) {
+    alert("ファイルが大きすぎます。10MB以下の週案JSONを選んでください。");
+    return;
+  }
+
   const reader = new FileReader();
   reader.onload = function() {
     try {
       const data = JSON.parse(reader.result);
+      validateWeeklyPlanImport(data);
+      if (!confirm("現在表示している週案を、読み込むデータに置き換えます。先に現在の週案を書き出しておくと安心です。続けますか？")) {
+        setSaveStatus("読み込みをキャンセルしました");
+        return;
+      }
       const normalized = WEEKLY_PLAN.normalizeState(data);
-      WEEKLY_STATE.replaceState(normalized);
-      WEEKLY_EDITOR.renderAllWithSelection();
+      // Avoid rendering the old selected cell against the newly imported state.
+      WEEKLY_STATE.replaceState(normalized, false);
+      if (window.WEEKLY_EDITOR) {
+        WEEKLY_EDITOR.clearSelection();
+      } else {
+        WEEKLY_RENDER.renderPreview(WEEKLY_STATE.state);
+        WEEKLY_RENDER.renderSidebar(WEEKLY_STATE.state, null);
+      }
       setSaveStatus("読み込みました");
     } catch (error) {
-      console.error(error);
-      alert("週案ファイルを読み込めませんでした。JSON形式のファイルを選んでください。");
+      console.error("週案JSONの読み込みに失敗しました", error);
+      alert("週案ファイルを読み込めませんでした。\n理由：" + (error && error.message ? error.message : "JSON形式を確認してください。") + "\n現在の週案は変更していません。");
     }
+  };
+  reader.onerror = function() {
+    alert("ファイルを読み込めませんでした。ファイルを確認して、もう一度お試しください。");
   };
   reader.readAsText(file, "utf-8");
 }

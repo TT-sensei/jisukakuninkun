@@ -186,8 +186,9 @@ function copyUnitToSameSubject() {
       if (key === selectedCell.dateKey && rowId === selectedCell.rowId) continue;
       if (WEEKLY_STATE.state.settings.visible[rowId] === false) continue;
 
+      if (WEEKLY_PLAN.getAnnualHolidayForDate(WEEKLY_STATE.state, key)) continue;
       const target = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, key, rowId);
-      if (target.subject !== source.subject) continue;
+      if (target.absent || target.subject !== source.subject) continue;
 
       target.unit = source.unit;
       copied += 1;
@@ -346,6 +347,10 @@ function setWeekday(value, checked) {
   }
 
   WEEKLY_STATE.state.settings.weekdays = Array.from(next).sort(function(a, b) { return a - b; });
+  if (!checked && selectedCell && selectedCell.dateKey !== "__week__" &&
+      WEEKLY_PLAN.fromISODate(selectedCell.dateKey).getDay() === value) {
+    selectedCell = null;
+  }
   WEEKLY_STATE.queueSave();
   renderAllWithSelection();
   renderSettingsModalSafe();
@@ -353,9 +358,12 @@ function setWeekday(value, checked) {
 
 function setPeriodCount(value) {
   const count = Math.min(8, Math.max(1, Number(value) || 6));
+  // Period count controls the available range; preserve each period's visibility preference
+  // so temporarily reducing the range does not erase the user's row settings.
   WEEKLY_STATE.state.settings.periodCount = count;
-  for (let period = 1; period <= 8; period += 1) {
-    WEEKLY_STATE.state.settings.visible["p" + period] = period <= count;
+  if (selectedCell) {
+    const row = WEEKLY_PLAN.getRowDef(selectedCell.rowId);
+    if (row && row.type === "lesson" && row.period > count) selectedCell = null;
   }
   WEEKLY_STATE.queueSave();
   renderAllWithSelection();
@@ -364,6 +372,7 @@ function setPeriodCount(value) {
 
 function setRowVisible(rowId, checked) {
   WEEKLY_STATE.state.settings.visible[rowId] = checked;
+  if (!checked && selectedCell && selectedCell.rowId === rowId) selectedCell = null;
   WEEKLY_STATE.queueSave();
   renderAllWithSelection();
   renderSettingsModalSafe();
@@ -528,8 +537,13 @@ function bindEditorEvents() {
     }
 
     if (target.id === "metaWeekStart") {
+      if (!target.value) {
+        // An empty date input must not silently jump the plan back to 1900.
+        target.value = WEEKLY_STATE.state.meta.weekStart;
+        return;
+      }
       WEEKLY_STATE.setWeekStart(target.value);
-      renderAllWithSelection();
+      clearSelection();
       renderSettingsModalSafe();
       return;
     }

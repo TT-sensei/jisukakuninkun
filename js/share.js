@@ -1,4 +1,3 @@
-
 function buildSharePayload() {
   const state = WEEKLY_STATE.state;
   const weekKeys = {};
@@ -119,13 +118,14 @@ function loadShareStateFromURL() {
     const prefix = isViewShare ? "#share-view=" : "#share=";
     const encoded = hash.slice(prefix.length);
     const shared = decodeShareState(encoded);
-    WEEKLY_STATE.replaceState(mergeSharedWeekIntoLocal(shared));
-    history.replaceState(null, "", window.location.pathname + window.location.search);
-    // 旧形式 #share= も閲覧専用として扱い、過去に発行した共有リンクも編集できないようにする。
+    // Show the shared plan in memory only. Do not persist it over the viewer's own local data.
+    WEEKLY_STATE.replaceState(mergeSharedWeekIntoLocal(shared), true, false);
+    // Keep the hash so refreshing the page reopens the same shared preview.
     document.body.classList.add("share-view");
     return "view";
   } catch (error) {
     console.warn("共有データを読み込めませんでした", error);
+    setSaveStatus("共有URLを読み込めませんでした。端末の週案は変更していません。");
     return false;
   }
 }
