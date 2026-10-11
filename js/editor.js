@@ -186,8 +186,9 @@ function copyUnitToSameSubject() {
       if (key === selectedCell.dateKey && rowId === selectedCell.rowId) continue;
       if (WEEKLY_STATE.state.settings.visible[rowId] === false) continue;
 
+      if (WEEKLY_PLAN.getAnnualHolidayForDate(WEEKLY_STATE.state, key)) continue;
       const target = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, key, rowId);
-      if (target.subject !== source.subject) continue;
+      if (target.absent || target.subject !== source.subject) continue;
 
       target.unit = source.unit;
       copied += 1;
