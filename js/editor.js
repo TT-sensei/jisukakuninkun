@@ -368,10 +368,6 @@ async function importNationalHolidays() {
       });
     });
 
-    const existing = WEEKLY_STATE.state.calendar.annual;
-    const existingHolidayDates = new Set(existing.filter(function(entry) {
-      return entry.kind === "holiday";
-    }).map(function(entry) { return entry.startDate; }));
     const imported = [];
     holidayMap.forEach(function(name, date) {
       const dateYear = Number(date.slice(0, 4));
