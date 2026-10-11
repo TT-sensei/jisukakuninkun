@@ -24,6 +24,10 @@ function isPlainObject(value) {
 
 function validateWeeklyPlanImport(data) {
   if (!isPlainObject(data)) throw new Error("データ全体がオブジェクトではありません。");
+  if (data.version !== undefined &&
+      (!Number.isFinite(Number(data.version)) || Number(data.version) > WEEKLY_PLAN.WEEKLY_PLAN_VERSION)) {
+    throw new Error("このアプリより新しい形式の週案ファイルは読み込めません。");
+  }
   if (!isPlainObject(data.meta)) throw new Error("週案の基本情報がありません。");
   if (!WEEKLY_PLAN.isValidISODate(data.meta.weekStart)) {
     throw new Error("週の開始日が見つからないか、形式が正しくありません。");
