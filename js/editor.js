@@ -402,6 +402,143 @@ async function importNationalHolidays() {
   }
 }
 
+
+function parseAnnualCSVRows(text) {
+  const source = String(text || "").replace(/^\uFEFF/, "");
+  const rows = [];
+  let row = [];
+  let field = "";
+  let quoted = false;
+  for (let i = 0; i < source.length; i += 1) {
+    const char = source[i];
+    if (quoted) {
+      if (char === '"') {
+        if (source[i + 1] === '"') {
+          field += '"';
+          i += 1;
+        } else {
+          quoted = false;
+        }
+      } else {
+        field += char;
+      }
+    } else if (char === '"' && field === "") {
+      quoted = true;
+    } else if (char === ",") {
+      row.push(field);
+      field = "";
+    } else if (char === "\n" || char === "\r") {
+      if (char === "\r" && source[i + 1] === "\n") i += 1;
+      row.push(field);
+      if (row.some(function(value) { return value.trim() !== ""; })) rows.push(row);
+      row = [];
+      field = "";
+    } else {
+      field += char;
+    }
+  }
+  if (quoted) throw new Error("CSVの引用符が閉じられていません。");
+  row.push(field);
+  if (row.some(function(value) { return value.trim() !== ""; })) rows.push(row);
+  return rows;
+}
+
+function parseAnnualCSV(text) {
+  const rows = parseAnnualCSVRows(text);
+  if (rows.length < 2) throw new Error("CSVに予定データがありません。テンプレートの見出しとデータ行を確認してください。");
+  const header = rows[0].map(function(value) { return value.trim().toLowerCase(); });
+  const findColumn = function(names) {
+    return header.findIndex(function(value) { return names.includes(value); });
+  };
+  const startIndex = findColumn(["startdate", "開始日", "開始"]);
+  const endIndex = findColumn(["enddate", "終了日", "終了"]);
+  const kindIndex = findColumn(["kind", "種類", "区分"]);
+  const nameIndex = findColumn(["name", "名称", "行事名", "予定"]);
+  if (startIndex < 0 || nameIndex < 0) {
+    throw new Error("CSVの見出しに「開始日」と「名称」が必要です。テンプレートを使うと確実です。");
+  }
+
+  return rows.slice(1).map(function(values, index) {
+    const startDate = String(values[startIndex] || "").trim();
+    const endDate = String(endIndex >= 0 ? values[endIndex] || "" : "").trim() || startDate;
+    const rawKind = String(kindIndex >= 0 ? values[kindIndex] || "" : "").trim().toLowerCase();
+    const name = String(values[nameIndex] || "").trim();
+    if (!WEEKLY_PLAN.isValidISODate(startDate)) {
+      throw new Error((index + 2) + "行目：開始日が正しくありません（YYYY-MM-DD）。");
+    }
+    if (!WEEKLY_PLAN.isValidISODate(endDate) || endDate < startDate) {
+      throw new Error((index + 2) + "行目：終了日は開始日以降の日付にしてください。");
+    }
+    if (!name) throw new Error((index + 2) + "行目：名称が空欄です。");
+    let kind = "event";
+    if (["祝日", "holiday"].includes(rawKind)) kind = "holiday";
+    else if (["", "行事", "event"].includes(rawKind)) kind = "event";
+    else throw new Error((index + 2) + "行目：種類は「行事」または「祝日」にしてください。");
+    return { startDate: startDate, endDate: endDate, kind: kind, name: name };
+  });
+}
+
+function importAnnualCSVText(text) {
+  let entries;
+  try {
+    entries = parseAnnualCSV(text);
+  } catch (error) {
+    alert(error.message || "CSVを読み込めませんでした。");
+    return { ok: false, imported: 0, skipped: 0, error: error.message || "CSVを読み込めませんでした。" };
+  }
+
+  const existing = new Set(WEEKLY_STATE.state.calendar.annual.map(function(entry) {
+    return [entry.startDate, entry.endDate || entry.startDate, entry.kind, entry.name].join("|");
+  }));
+  let imported = 0;
+  let skipped = 0;
+  entries.forEach(function(entry) {
+    const key = [entry.startDate, entry.endDate, entry.kind, entry.name].join("|");
+    if (existing.has(key)) {
+      skipped += 1;
+      return;
+    }
+    existing.add(key);
+    WEEKLY_STATE.state.calendar.annual.push(WEEKLY_PLAN.createAnnualEntry(entry));
+    imported += 1;
+  });
+
+  if (imported) {
+    WEEKLY_STATE.queueSave();
+    renderAllWithSelection();
+    WEEKLY_RENDER.renderAnnualModal(WEEKLY_STATE.state);
+  }
+  setSaveStatus(imported + "件の年間予定を追加しました");
+  alert(imported + "件の年間予定を追加しました。" + (skipped ? "\n重複する" + skipped + "件はスキップしました。" : "") + "\n既存の予定は変更していません。");
+  return { ok: true, imported: imported, skipped: skipped };
+}
+
+function downloadAnnualCSVTemplate() {
+  const csv = "startDate,endDate,kind,name\\r\\n2026-04-06,,event,始業式\\r\\n2026-04-07,,event,入学式\\r\\n2026-04-29,,holiday,昭和の日\\r\\n";
+  const blob = new Blob(["\\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "年間予定テンプレート.csv";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function handleAnnualCSVFile(file) {
+  if (!file) return;
+  try {
+    const text = await file.text();
+    importAnnualCSVText(text);
+  } catch (error) {
+    alert("CSVファイルを読み込めませんでした。文字コードとファイル形式を確認してください。");
+  } finally {
+    const input = document.getElementById("annualCSVInput");
+    if (input) input.value = "";
+  }
+}
+
 function saveAnnualEntry(id) {
   const entry = WEEKLY_STATE.state.calendar.annual.find(function(item) {
     return item.id === id;
@@ -683,6 +820,15 @@ function bindEditorEvents() {
       importNationalHolidays();
       return;
     }
+    if (event.target.closest("#annualCSVTemplate")) {
+      downloadAnnualCSVTemplate();
+      return;
+    }
+    if (event.target.closest("#annualCSVImportButton")) {
+      const input = document.getElementById("annualCSVInput");
+      if (input) input.click();
+      return;
+    }
     if (event.target.closest("#annualAdd")) {
       addAnnualEntry();
       return;
@@ -740,6 +886,11 @@ function bindEditorEvents() {
 
     if (target.matches(".inline-subject")) {
       updateInlineSubject(target);
+      return;
+    }
+    if (target.id === "annualCSVInput") {
+      const file = target.files && target.files[0];
+      handleAnnualCSVFile(file);
       return;
     }
 
@@ -806,6 +957,8 @@ function bindEditorEvents() {
 }
 
 window.WEEKLY_EDITOR = {
+  parseAnnualCSV,
+  importAnnualCSVText,
   bindEditorEvents,
   getSelectedCell,
   clearSelection,
