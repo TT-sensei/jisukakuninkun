@@ -432,3 +432,21 @@ test("annual CSV parser supports Japanese headers and quoted commas", () => {
   assert.equal(parsed[0].name, "遠足, 校外学習");
   assert.equal(parsed[0].kind, "event");
 });
+
+
+test("annual CSV export round-trips Japanese names, commas, and quotes", () => {
+  const context = makeContext();
+  vm.runInContext(read("js/editor.js"), context, { filename: "js/editor.js" });
+  const entries = [
+    { startDate: "2026-04-07", endDate: "2026-04-07", kind: "event", name: '入学式, "歓迎"' },
+    { startDate: "2026-04-29", endDate: "2026-04-29", kind: "holiday", name: "昭和の日" }
+  ];
+  const csv = context.WEEKLY_EDITOR.serializeAnnualCSV(entries);
+  assert.match(csv, /開始日,終了日,種類,名称/);
+  assert.match(csv, /"入学式, ""歓迎"""/);
+  const parsed = context.WEEKLY_EDITOR.parseAnnualCSV(csv);
+  assert.equal(parsed.length, 2);
+  assert.equal(parsed[0].name, '入学式, "歓迎"');
+  assert.equal(parsed[0].endDate, "2026-04-07");
+  assert.equal(parsed[1].kind, "holiday");
+});

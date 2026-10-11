@@ -513,6 +513,42 @@ function importAnnualCSVText(text) {
   return { ok: true, imported: imported, skipped: skipped };
 }
 
+
+function serializeAnnualCSV(entries) {
+  const escapeField = function(value) {
+    const text = String(value ?? "");
+    return /[",\r\n]/.test(text) ? '"' + text.replaceAll('"', '""') + '"' : text;
+  };
+  const rows = [["開始日", "終了日", "種類", "名称"]];
+  (Array.isArray(entries) ? entries : []).slice().sort(function(a, b) {
+    return String(a.startDate || "").localeCompare(String(b.startDate || "")) ||
+      String(a.name || "").localeCompare(String(b.name || ""), "ja");
+  }).forEach(function(entry) {
+    rows.push([
+      entry.startDate || "",
+      entry.endDate && entry.endDate !== entry.startDate ? entry.endDate : "",
+      entry.kind === "holiday" ? "祝日" : "行事",
+      entry.name || ""
+    ]);
+  });
+  return rows.map(function(row) { return row.map(escapeField).join(","); }).join("\r\n") + "\r\n";
+}
+
+function downloadAnnualCSVExport() {
+  const selectedWeek = WEEKLY_PLAN.fromISODate(WEEKLY_STATE.state.meta.weekStart);
+  const schoolYear = selectedWeek.getMonth() >= 3 ? selectedWeek.getFullYear() : selectedWeek.getFullYear() - 1;
+  const csv = serializeAnnualCSV(WEEKLY_STATE.state.calendar.annual || []);
+  const blob = new Blob([String.fromCharCode(0xFEFF), csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "年間予定_" + schoolYear + "年度.csv";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
 function downloadAnnualCSVTemplate() {
   const csv = "startDate,endDate,kind,name\r\n";
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -824,6 +860,10 @@ function bindEditorEvents() {
       downloadAnnualCSVTemplate();
       return;
     }
+    if (event.target.closest("#annualCSVExportButton")) {
+      downloadAnnualCSVExport();
+      return;
+    }
     if (event.target.closest("#annualCSVImportButton")) {
       const input = document.getElementById("annualCSVInput");
       if (input) input.click();
@@ -958,6 +998,7 @@ function bindEditorEvents() {
 
 window.WEEKLY_EDITOR = {
   parseAnnualCSV,
+  serializeAnnualCSV,
   importAnnualCSVText,
   bindEditorEvents,
   getSelectedCell,
