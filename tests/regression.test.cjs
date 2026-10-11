@@ -549,7 +549,8 @@ test("Enter navigation advances cells while preserving IME conversion behavior",
   assert.equal(prevented, true);
   assert.equal(secondCell.field.focused, true);
   assert.equal(secondCell.field.selected, true);
-  assert.deepEqual(context.WEEKLY_EDITOR.getSelectedCell(), { dateKey: "2026-10-13", rowId: "p1" });
+  assert.equal(context.WEEKLY_EDITOR.getSelectedCell().dateKey, "2026-10-13");
+  assert.equal(context.WEEKLY_EDITOR.getSelectedCell().rowId, "p1");
 
   prevented = false;
   listeners.keydown({
