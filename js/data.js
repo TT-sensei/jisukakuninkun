@@ -181,12 +181,12 @@ function normalizeState(raw) {
       : makeTimetableTemplate(),
     calendar: {
       annual: Array.isArray(source.calendar && source.calendar.annual)
-        ? source.calendar.annual.map(function(entry) {
+        ? source.calendar.annual.map(function(entry, index) {
             const item = entry && typeof entry === "object" && !Array.isArray(entry) ? entry : {};
             const startDate = normalizeAnnualDate(item.startDate || item.date);
             const endDate = normalizeAnnualDate(item.endDate || item.startDate || item.date) || startDate;
             return {
-              id: String(item.id || ""),
+              id: String(item.id || ("annual-import-" + startDate + "-" + index)),
               startDate,
               endDate: endDate && endDate >= startDate ? endDate : startDate,
               kind: item.kind === "holiday" ? "holiday" : "event",
