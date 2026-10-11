@@ -379,3 +379,15 @@ test("annual standard hours normalize safely and compare with saved year-to-date
   assert.match(context.WEEKLY_RENDER.renderAnnualTargetSummary(state, counts), /あと 174時間/);
   assert.doesNotMatch(context.WEEKLY_RENDER.renderAnnualTargetSummary(state, counts), /社会/);
 });
+
+
+test("annual holiday importer is available and keeps manual annual planning support", () => {
+  const render = read("js/render.js");
+  const editor = read("js/editor.js");
+  assert.match(render, /annualImportHolidays/);
+  assert.match(render, /祝日を自動登録/);
+  assert.match(editor, /https:\\/\\/mati0516\\.github\\.io\\/japan-holidays\\/year\\//);
+  assert.match(editor, /existingHolidayDates\.has\(date\)/);
+  assert.match(editor, /WEEKLY_PLAN\.state/);
+  assert.match(editor, /手動での祝日登録/);
+});
