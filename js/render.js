@@ -663,6 +663,7 @@ window.WEEKLY_RENDER = {
   renderSummary,
   calculateSubjectCounts,
   calculateSubjectCountsForRange,
+  renderAnnualTargetSummary,
   collectUnitSuggestions,
   updatePrintLessonView,
   updatePrintTextView,
