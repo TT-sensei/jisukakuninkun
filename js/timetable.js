@@ -107,6 +107,9 @@ function readTimetableForm() {
 function saveTimetableFromForm(showMessage = true) {
   WEEKLY_STATE.state.timetable = readTimetableForm();
   WEEKLY_STATE.queueSave();
+  if (window.WEEKLY_EDITOR && WEEKLY_EDITOR.renderAllWithSelection) {
+    WEEKLY_EDITOR.renderAllWithSelection();
+  }
   if (showMessage) setSaveStatus("時間割を保存しました");
 }
 
