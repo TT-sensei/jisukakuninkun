@@ -10,33 +10,48 @@
   <meta name="description" content="先生のための週案作成・時数集計・印刷・共有・保存ツール">
   <title>週案メーカー | TT-sensei</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="workspace.css">
 </head>
 <body class="edu-app edu-style-editorial">
   <header class="app-header edu-header">
-    <div class="brand">
-      <h1>週案メーカー</h1>
-      <span>作成・時数集計・印刷・共有</span>
+    <div class="workspace-topline">
+      <div class="brand">
+        <h1>週案メーカー</h1>
+        <span>週の計画・時数管理</span>
+      </div>
+
+      <div class="week-nav" aria-label="週の移動">
+        <button id="prevWeek" class="arrow" type="button" aria-label="前の週">‹</button>
+        <div id="currentWeekLabel" class="week-label">読み込み中</div>
+        <button id="todayButton" class="today" type="button">今週</button>
+        <button id="nextWeek" class="arrow" type="button" aria-label="次の週">›</button>
+      </div>
+
+      <div class="topline-status">
+        <span class="status-dot"><span id="saveStatus">保存済み</span></span>
+        <span class="status-help">入力内容はこの端末に自動保存</span>
+      </div>
     </div>
 
-    <div class="week-nav" aria-label="週の移動">
-      <button id="prevWeek" class="arrow" type="button" aria-label="前の週">‹</button>
-      <button id="todayButton" class="today" type="button">今週</button>
-      <div id="currentWeekLabel" class="week-label">読み込み中</div>
-      <button id="nextWeek" class="arrow" type="button" aria-label="次の週">›</button>
-    </div>
-
-    <div class="header-actions">
-      <span class="status-dot"><span id="saveStatus">保存済み</span></span>
-      <button id="annualButton" class="header-button" type="button">年間予定</button>
-      <button id="timetableButton" class="header-button" type="button">時間割登録</button>
-      <button id="openSettingsHeader" class="header-button" type="button">設定</button>
-      <button id="newWeekButton" class="header-button" type="button">週を空にする</button>
-      <button id="importButton" class="header-button" type="button">読み込み</button>
-      <button id="exportButton" class="header-button" type="button">書き出し</button>
-      <button id="shareButton" class="header-button" type="button">共有</button>
-      <button id="printButton" class="header-button primary" type="button">印刷</button>
-      <input id="importInput" type="file" accept=".json,application/json" hidden>
-    </div>
+    <nav class="header-actions" aria-label="週案の操作">
+      <div class="action-group action-group-planning">
+        <span class="action-group-label">予定・設定</span>
+        <button id="annualButton" class="header-button" type="button">年間予定</button>
+        <button id="timetableButton" class="header-button" type="button">時間割登録</button>
+        <button id="openSettingsHeader" class="header-button" type="button">週案の設定</button>
+        <button id="newWeekButton" class="header-button subtle-destructive" type="button">週を空にする</button>
+      </div>
+      <div class="action-group action-group-data">
+        <span class="action-group-label">データ</span>
+        <button id="importButton" class="header-button" type="button">JSON読み込み</button>
+        <button id="exportButton" class="header-button" type="button">JSON保存</button>
+        <button id="shareButton" class="header-button" type="button">共有</button>
+        <input id="importInput" type="file" accept=".json,application/json" hidden>
+      </div>
+      <div class="action-group action-group-primary">
+        <button id="printButton" class="header-button primary" type="button"><span aria-hidden="true">↗</span> 印刷・PDF</button>
+      </div>
+    </nav>
   </header>
 
   <main class="workspace">

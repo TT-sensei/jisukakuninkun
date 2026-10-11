@@ -450,3 +450,44 @@ test("annual CSV export round-trips Japanese names, commas, and quotes", () => {
   assert.equal(parsed[0].endDate, "2026-04-07");
   assert.equal(parsed[1].kind, "holiday");
 });
+
+
+test("desktop/tablet workbench renders focused panels and preserves selected tab", () => {
+  const context = makeContext();
+  const panel = {
+    dataset: { activePane: "hours" },
+    innerHTML: "",
+    querySelectorAll() { return []; }
+  };
+  const getElementById = context.document.getElementById.bind(context.document);
+  context.document.getElementById = (id) => id === "editorPanel" ? panel : getElementById(id);
+
+  vm.runInContext(read("js/state.js"), context, { filename: "js/state.js" });
+  vm.runInContext(read("js/drive.js"), context, { filename: "js/drive.js" });
+  vm.runInContext(read("js/render.js"), context, { filename: "js/render.js" });
+
+  context.WEEKLY_RENDER.renderSidebar(context.WEEKLY_STATE.state, null);
+
+  assert.equal(panel.dataset.activePane, "hours");
+  for (const tab of ["input", "hours", "schedule", "settings"]) {
+    assert.match(panel.innerHTML, new RegExp('data-dashboard-tab="' + tab + '"'));
+    assert.match(panel.innerHTML, new RegExp('data-dashboard-group="' + tab + '"'));
+  }
+});
+
+test("desktop-first workspace keeps core control IDs and loads its layout layer last", () => {
+  const html = read("index.html");
+  const styles = read("workspace.css");
+  const editor = read("js/editor.js");
+  const app = read("js/app.js");
+
+  assert.ok(html.indexOf('href="styles.css"') < html.indexOf('href="workspace.css"'));
+  for (const id of ["prevWeek", "nextWeek", "todayButton", "annualButton", "timetableButton",
+    "openSettingsHeader", "newWeekButton", "importButton", "exportButton", "shareButton", "printButton"]) {
+    assert.match(html, new RegExp('id="' + id + '"'), "missing existing control " + id);
+  }
+  assert.match(styles, /grid-template-columns: minmax\(0, 2\.05fr\) minmax\(370px, \.95fr\)/);
+  assert.match(styles, /max-width: 1250px/);
+  assert.match(editor, /data-dashboard-tab/);
+  assert.match(app, /importGroup\.insertBefore\(button, importButton\)/);
+});

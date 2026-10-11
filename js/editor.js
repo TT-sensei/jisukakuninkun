@@ -13,6 +13,8 @@ function clearSelection() {
 
 function selectCell(dateKey, rowId) {
   selectedCell = { dateKey, rowId };
+  const editorPanel = document.getElementById("editorPanel");
+  if (editorPanel) editorPanel.dataset.activePane = "input";
   WEEKLY_RENDER.renderSidebar(WEEKLY_STATE.state, selectedCell);
   highlightSelectedCell();
 }
@@ -754,6 +756,21 @@ function renderSettingsModalSafe() {
 
 function bindEditorEvents() {
   document.addEventListener("click", function(event) {
+    const dashboardTab = event.target.closest("[data-dashboard-tab]");
+    if (dashboardTab) {
+      const editorPanel = document.getElementById("editorPanel");
+      const pane = dashboardTab.dataset.dashboardTab;
+      if (editorPanel && ["input", "hours", "schedule", "settings"].includes(pane)) {
+        editorPanel.dataset.activePane = pane;
+        editorPanel.querySelectorAll("[data-dashboard-tab]").forEach(function(button) {
+          const active = button.dataset.dashboardTab === pane;
+          button.classList.toggle("active", active);
+          button.setAttribute("aria-pressed", active ? "true" : "false");
+        });
+      }
+      return;
+    }
+
     const notice = event.target.closest(".notice-footer");
     if (notice) {
       selectCell("__week__", "notice");

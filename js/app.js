@@ -32,9 +32,9 @@ function updateHeader() {
 function getPreviewZoom() {
   try {
     const raw = Number(localStorage.getItem("tt-sensei-weekly-plan-preview-zoom"));
-    return Number.isFinite(raw) && raw >= 70 && raw <= 110 ? raw : 82;
+    return Number.isFinite(raw) && raw >= 70 && raw <= 110 ? raw : 90;
   } catch (error) {
-    return 82;
+    return 90;
   }
 }
 
@@ -187,7 +187,8 @@ function exposeRecoveryCopyIfAvailable() {
     downloadText("週案_復旧用データ_" + date + ".json", raw, "application/json;charset=utf-8");
     setSaveStatus("復旧用データを書き出しました");
   });
-  actions.insertBefore(button, importButton);
+  const importGroup = importButton.parentElement || actions;
+  importGroup.insertBefore(button, importButton);
 }
 
 function startApp() {
