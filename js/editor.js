@@ -514,8 +514,8 @@ function importAnnualCSVText(text) {
 }
 
 function downloadAnnualCSVTemplate() {
-  const csv = "startDate,endDate,kind,name\\r\\n2026-04-06,,event,始業式\\r\\n2026-04-07,,event,入学式\\r\\n2026-04-29,,holiday,昭和の日\\r\\n";
-  const blob = new Blob(["\\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+  const csv = "startDate,endDate,kind,name\r\n2026-04-06,,event,始業式\r\n2026-04-07,,event,入学式\r\n2026-04-29,,holiday,昭和の日\r\n";
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
