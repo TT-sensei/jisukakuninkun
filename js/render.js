@@ -428,7 +428,9 @@ function renderSidebar(state, selected) {
       '<label class="field"><span>単元名</span><input id="bulkUnitName" type="text" list="unitSuggestions" placeholder="例：分数のわり算"></label>' +
       '<label class="field"><span>配置するコマ数</span><input id="bulkUnitCount" type="number" min="1" max="40" step="1" value="5"></label>' +
       '<button type="button" class="secondary-button dashboard-action" id="bulkUnitPlace">空いているコマに配置</button>' +
-      '<p class="dashboard-settings-note">月曜から順に、表示中の授業コマを確認します。足りない場合は配置できた分だけ反映します。</p></section>' +
+      '<p class="dashboard-settings-note">月曜から順に、表示中の授業コマを確認します。足りない場合は配置できた分だけ反映します。</p>' +
+      '<button type="button" class="ghost-button dashboard-action" id="copyPreviousWeekLessons">前週の授業を空きコマにコピー</button>' +
+      '<p class="dashboard-settings-note">前週の同じ曜日・時間目から、授業内容だけをコピーします。現在の入力は上書きしません。</p></section>' +
 
     '<section class="dashboard-section"><div class="dashboard-section-head"><div><span class="eyebrow">SUBJECT HOURS</span><h3>教科別の時数</h3></div><span class="dashboard-count-total">' +
       total + '時間</span></div><div class="dashboard-subject-grid">' + (subjects || '<span class="count-empty">教科を入力すると、ここに集計されます</span>') + '</div></section>' +
