@@ -14,6 +14,8 @@ function clearSelection() {
 function selectCell(dateKey, rowId) {
   selectedCell = { dateKey, rowId };
   const editorPanel = document.getElementById("editorPanel");
+  const settingsPanel = document.querySelector(".settings-panel");
+  if (settingsPanel) settingsPanel.scrollTop = 0;
   if (editorPanel) editorPanel.dataset.activePane = "input";
   WEEKLY_RENDER.renderSidebar(WEEKLY_STATE.state, selectedCell);
   highlightSelectedCell();
@@ -785,6 +787,8 @@ function bindEditorEvents() {
       const editorPanel = document.getElementById("editorPanel");
       const pane = dashboardTab.dataset.dashboardTab;
       if (editorPanel && ["input", "hours", "schedule", "settings"].includes(pane)) {
+        const settingsPanel = document.querySelector(".settings-panel");
+        if (settingsPanel) settingsPanel.scrollTop = 0;
         editorPanel.dataset.activePane = pane;
         editorPanel.querySelectorAll("[data-dashboard-tab]").forEach(function(button) {
           const active = button.dataset.dashboardTab === pane;

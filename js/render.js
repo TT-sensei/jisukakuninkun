@@ -499,6 +499,9 @@ function renderSidebar(state, selected) {
       '<button type="button" class="dashboard-tab" data-dashboard-tab="settings" aria-pressed="false">保存・設定</button>' +
     '</nav>' +
 
+    '<section class="selection-card convenience-card dashboard-detail" data-dashboard-group="input"><div class="selection-card-head"><div><span class="eyebrow">QUICK TOOLS</span><h2>選択中のコマ</h2></div></div>' +
+      detail + '</section>' +
+
     '<section class="dashboard-section bulk-unit-card" data-dashboard-group="input"><div class="dashboard-section-head"><div><span class="eyebrow">QUICK PLAN</span><h3>単元をまとめて配置</h3></div></div>' +
       '<p class="dashboard-empty">今週の空いているコマに、選んだ教科と単元名を順番に入れます。入力済みのコマは変更しません。</p>' +
       '<label class="field"><span>教科</span><select id="bulkUnitSubject"><option value="">教科を選択</option>' +
@@ -540,9 +543,6 @@ function renderSidebar(state, selected) {
       '<button type="button" class="ghost-button dashboard-action" id="sideAnnual">年間予定を確認</button></div>' +
     '<div><div class="dashboard-section-head"><div><span class="eyebrow">TIMETABLE</span><h3>時間割</h3></div></div><p class="dashboard-timetable-status">' +
       (timetableTotal ? timetableTotal + "コマ登録済み" : "まだ登録されていません") + '</p><button type="button" class="secondary-button dashboard-action" id="sideTimetable">時間割を確認・登録</button></div></section>' +
-
-    '<section class="selection-card convenience-card dashboard-detail" data-dashboard-group="input"><div class="selection-card-head"><div><span class="eyebrow">QUICK TOOLS</span><h2>選択中のコマ</h2></div></div>' +
-      detail + '</section>' +
 
     '<section class="settings-section dashboard-data-card" data-dashboard-group="settings"><div class="section-heading"><div><span class="eyebrow">DATA</span><h3>データを保管する</h3></div></div>' +
       '<p class="dashboard-settings-note">別の端末でも使うなら、JSONを書き出してGoogle Driveに保存しておくと安心です。</p>' +
