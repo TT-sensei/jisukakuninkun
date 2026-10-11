@@ -353,10 +353,9 @@ function setWeekday(value, checked) {
 
 function setPeriodCount(value) {
   const count = Math.min(8, Math.max(1, Number(value) || 6));
+  // Period count controls the available range; preserve each period's visibility preference
+  // so temporarily reducing the range does not erase the user's row settings.
   WEEKLY_STATE.state.settings.periodCount = count;
-  for (let period = 1; period <= 8; period += 1) {
-    WEEKLY_STATE.state.settings.visible["p" + period] = period <= count;
-  }
   WEEKLY_STATE.queueSave();
   renderAllWithSelection();
   renderSettingsModalSafe();
