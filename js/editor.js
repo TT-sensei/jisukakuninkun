@@ -126,8 +126,10 @@ function updateSelectedLessonField(field, value) {
   const row = WEEKLY_PLAN.getRowDef(selectedCell.rowId);
   if (!row || row.type !== "lesson") return;
   const cell = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, selectedCell.dateKey, selectedCell.rowId);
+  const choosingAbsence = field === "subject" && value === "__absent__";
+
   if (field === "subject") {
-    if (value === "__absent__") {
+    if (choosingAbsence) {
       cell.absent = true;
       cell.subject = "";
       cell.unit = "";
@@ -148,9 +150,24 @@ function updateSelectedLessonField(field, value) {
     if (control) control.value = value;
     WEEKLY_RENDER.updatePrintLessonView(cellEl, cell);
   }
+
+  if (choosingAbsence) {
+    // Absence changes the cell layout; replace the interactive editor with its absence display.
+    renderAllWithSelection();
+    return;
+  }
+
   WEEKLY_RENDER.renderSummary(WEEKLY_STATE.state);
   WEEKLY_RENDER.renderSidebar(WEEKLY_STATE.state, selectedCell);
-  if (field === "subject") renderAllWithSelection();
+
+  if (field === "subject") {
+    // Keep the grid intact and continue directly to unit entry in the selected-cell editor.
+    const sideUnit = document.getElementById("sideUnit");
+    if (sideUnit && !sideUnit.disabled) {
+      sideUnit.focus();
+      if (typeof sideUnit.select === "function") sideUnit.select();
+    }
+  }
 }
 
 function updateSelectedText(value) {

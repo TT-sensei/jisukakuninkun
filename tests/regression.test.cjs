@@ -681,3 +681,68 @@ test("save status distinguishes failures, read-only sharing, working, and succes
   assert.equal(status.textContent, "保存済み");
   assert.ok(classes.has("is-success"));
 });
+
+
+test("side-panel subject choice preserves the grid and focuses the unit editor", () => {
+  const context = makeContext();
+  vm.runInContext(read("js/state.js"), context, { filename: "js/state.js" });
+  vm.runInContext(read("js/render.js"), context, { filename: "js/render.js" });
+  vm.runInContext(read("js/editor.js"), context, { filename: "js/editor.js" });
+  context.CSS = { escape: (value) => value };
+
+  let previewRenders = 0;
+  let sidebarRenders = 0;
+  let summaryRenders = 0;
+  const panel = { dataset: {}, scrollTop: 400 };
+  const sideUnit = {
+    focused: false, selected: false, disabled: false,
+    focus() { this.focused = true; },
+    select() { this.selected = true; }
+  };
+  const subjectControl = { value: "" };
+  const cellEl = {
+    dataset: { date: context.WEEKLY_STATE.state.meta.weekStart, rowId: "p1" },
+    style: { setProperty() {} },
+    classList: { add() {}, remove() {}, toggle() {} },
+    querySelector(selector) {
+      return selector === '[data-cell-field="subject"]' ? subjectControl : null;
+    }
+  };
+  context.document.getElementById = (id) => {
+    if (id === "editorPanel") return panel;
+    if (id === "sideUnit") return sideUnit;
+    return null;
+  };
+  context.document.querySelector = (selector) => {
+    if (selector === ".settings-panel") return panel;
+    if (selector.startsWith(".plan-cell[data-date=")) return cellEl;
+    return null;
+  };
+  context.document.querySelectorAll = () => [];
+  context.WEEKLY_STATE.queueSave = () => {};
+  context.WEEKLY_RENDER.renderPreview = () => { previewRenders += 1; };
+  context.WEEKLY_RENDER.renderSidebar = () => { sidebarRenders += 1; };
+  context.WEEKLY_RENDER.renderSummary = () => { summaryRenders += 1; };
+  context.WEEKLY_RENDER.updatePrintLessonView = () => {};
+
+  const dateKey = context.WEEKLY_STATE.state.meta.weekStart;
+  context.selectCell(dateKey, "p1");
+  previewRenders = 0;
+  sidebarRenders = 0;
+  summaryRenders = 0;
+
+  context.updateSelectedLessonField("subject", "算数");
+  assert.equal(context.WEEKLY_PLAN.getCell(context.WEEKLY_STATE.state, dateKey, "p1").subject, "算数");
+  assert.equal(previewRenders, 0, "normal subject changes should not rebuild the weekly grid");
+  assert.equal(sidebarRenders, 1);
+  assert.equal(summaryRenders, 1);
+  assert.equal(sideUnit.focused, true);
+  assert.equal(sideUnit.selected, true, "existing unit text should be ready for replacement");
+
+  sideUnit.focused = false;
+  sideUnit.selected = false;
+  context.updateSelectedLessonField("subject", "__absent__");
+  assert.equal(context.WEEKLY_PLAN.getCell(context.WEEKLY_STATE.state, dateKey, "p1").absent, true);
+  assert.equal(previewRenders, 1, "absence should re-render because the cell layout changes");
+  assert.equal(sideUnit.focused, false);
+});
