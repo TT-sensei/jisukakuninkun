@@ -67,10 +67,15 @@ function shiftWeek(delta) {
 }
 
 function setWeekStart(value) {
+  if (!WEEKLY_PLAN.isValidISODate(value)) {
+    setSaveStatus("日付を確認してください");
+    return false;
+  }
   const date = WEEKLY_PLAN.fromISODate(value);
   appState.meta.weekStart = WEEKLY_PLAN.toISODate(WEEKLY_PLAN.getMonday(date));
   queueSave();
   window.dispatchEvent(new CustomEvent("weekly-plan:state"));
+  return true;
 }
 
 window.WEEKLY_STATE = {
