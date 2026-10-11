@@ -362,7 +362,7 @@ async function importNationalHolidays() {
     const holidayMap = new Map();
     responses.forEach(function(data) {
       Object.keys(data).forEach(function(date) {
-        if (/^\\d{4}-\\d{2}-\\d{2}$/.test(date) && typeof data[date] === "string" && data[date].trim()) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(date) && typeof data[date] === "string" && data[date].trim()) {
           holidayMap.set(date, data[date].trim());
         }
       });
@@ -398,7 +398,7 @@ async function importNationalHolidays() {
       : schoolYear + "年度の祝日はすでに登録済みです。追加はありませんでした。");
   } catch (error) {
     console.error("祝日データの取得に失敗しました", error);
-    alert("祝日データを取得できませんでした。インターネット接続を確認して、もう一度お試しください。\\n手動での祝日登録はこれまでどおり利用できます。");
+    alert("祝日データを取得できませんでした。インターネット接続を確認して、もう一度お試しください。\n手動での祝日登録はこれまでどおり利用できます。");
   } finally {
     if (document.getElementById("annualModal") && !document.getElementById("annualModal").classList.contains("hidden")) {
       WEEKLY_RENDER.renderAnnualModal(WEEKLY_STATE.state);
