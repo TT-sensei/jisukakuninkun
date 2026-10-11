@@ -2322,3 +2322,6 @@ body.share-view #planPreview .notice-footer-body {
     height: var(--holiday-band-height, 360px);
   }
 }
+
+/* Flexible schedule rows */
+.settings-explain{margin:0 0 10px;color:var(--muted);font-size:11px;line-height:1.6}.row-setting{display:grid;grid-template-columns:minmax(120px,.9fr) minmax(110px,1fr) auto;align-items:center;gap:7px}.row-setting-main{min-width:0}.row-order-actions{display:flex;align-items:center;gap:3px}.row-order-actions button{min-width:30px;min-height:30px;padding:3px 6px;font-size:11px}.row-order-actions button:disabled{opacity:.35;cursor:not-allowed}.custom-row-actions{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.custom-row-actions>span{width:100%;color:var(--muted);font-size:10px;font-weight:800}.custom-row-actions button{flex:1 1 130px}@media(max-width:620px){.row-setting{grid-template-columns:minmax(90px,1fr) minmax(90px,1fr)}.row-order-actions{grid-column:1/-1;justify-content:flex-end}}

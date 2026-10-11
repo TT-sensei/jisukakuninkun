@@ -379,7 +379,62 @@ function setRowVisible(rowId, checked) {
 }
 
 function setRowLabel(labelKey, value) {
-  WEEKLY_STATE.state.settings.labels[labelKey] = value || WEEKLY_PLAN.DEFAULT_LABELS[labelKey];
+  const row = WEEKLY_PLAN.getRowDef(labelKey, WEEKLY_STATE.state);
+  const fallback = WEEKLY_PLAN.DEFAULT_LABELS[labelKey] || (row && row.defaultLabel) || "予定";
+  WEEKLY_STATE.state.settings.labels[labelKey] = String(value || fallback).trim().slice(0, 40) || fallback;
+  WEEKLY_STATE.queueSave();
+  renderAllWithSelection();
+  renderSettingsModalSafe();
+}
+
+function moveRow(rowId, direction) {
+  const settings = WEEKLY_STATE.state.settings;
+  const order = settings.rowOrder;
+  const index = order.indexOf(rowId);
+  const target = index + direction;
+  if (index < 0 || target < 0 || target >= order.length) return;
+  [order[index], order[target]] = [order[target], order[index]];
+  WEEKLY_STATE.queueSave();
+  renderAllWithSelection();
+  renderSettingsModalSafe();
+}
+
+function addCustomRow(type) {
+  const state = WEEKLY_STATE.state;
+  if (!Array.isArray(state.settings.customRows)) state.settings.customRows = [];
+  if (state.settings.customRows.length >= 30) {
+    alert("自由な行は30行まで追加できます。");
+    return;
+  }
+  let id;
+  do { id = "custom-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6); }
+  while (WEEKLY_PLAN.getRowDef(id, state));
+  const label = type === "time" ? "時刻" : "新しい行";
+  state.settings.customRows.push({ id, type: type === "time" ? "time" : "text", labelKey: id, defaultLabel: label, custom: true });
+  state.settings.visible[id] = true;
+  state.settings.labels[id] = label;
+  const insertAt = state.settings.rowOrder.indexOf("items");
+  if (insertAt >= 0) state.settings.rowOrder.splice(insertAt, 0, id);
+  else state.settings.rowOrder.push(id);
+  WEEKLY_STATE.queueSave();
+  renderAllWithSelection();
+  renderSettingsModalSafe();
+  const field = document.querySelector('[data-row-label="' + CSS.escape(id) + '"]');
+  if (field) { field.focus(); field.select(); }
+}
+
+function removeCustomRow(rowId) {
+  const state = WEEKLY_STATE.state;
+  const row = (state.settings.customRows || []).find(item => item.id === rowId);
+  if (!row) return;
+  const label = state.settings.labels[rowId] || row.defaultLabel;
+  if (!confirm("「" + label + "」の行と、その行に入力した内容をすべて削除します。よろしいですか？")) return;
+  state.settings.customRows = state.settings.customRows.filter(item => item.id !== rowId);
+  state.settings.rowOrder = state.settings.rowOrder.filter(id => id !== rowId);
+  delete state.settings.visible[rowId];
+  delete state.settings.labels[rowId];
+  Object.keys(state.cells || {}).forEach(dateKey => { if (state.cells[dateKey]) delete state.cells[dateKey][rowId]; });
+  if (selectedCell && selectedCell.rowId === rowId) selectedCell = null;
   WEEKLY_STATE.queueSave();
   renderAllWithSelection();
   renderSettingsModalSafe();
@@ -470,6 +525,18 @@ function bindEditorEvents() {
       if (input) input.click();
       return;
     }
+
+    const rowMoveUp = event.target.closest("[data-row-move-up]");
+    if (rowMoveUp) { moveRow(rowMoveUp.dataset.rowMoveUp, -1); return; }
+
+    const rowMoveDown = event.target.closest("[data-row-move-down]");
+    if (rowMoveDown) { moveRow(rowMoveDown.dataset.rowMoveDown, 1); return; }
+
+    const rowAdd = event.target.closest("[data-row-add]");
+    if (rowAdd) { addCustomRow(rowAdd.dataset.rowAdd); return; }
+
+    const rowRemove = event.target.closest("[data-row-remove]");
+    if (rowRemove) { removeCustomRow(rowRemove.dataset.rowRemove); return; }
 
     if (event.target.closest("#settingsClose")) {
       closeSettingsModal();

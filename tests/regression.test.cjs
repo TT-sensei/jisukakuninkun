@@ -165,3 +165,58 @@ test("print CSS allows page flow, repeats table headings, and avoids clipping th
   const render = read("js/render.js");
   assert.match(render, /band\.style\.height\s*=\s*height\s*\+\s*"px"/);
 });
+
+
+test("custom schedule rows can be added, ordered, renamed, and stay outside lesson-hour counts", () => {
+  const context = makeContext();
+  vm.runInContext(read("js/render.js"), context, { filename: "js/render.js" });
+  const plan = context.WEEKLY_PLAN;
+  const state = plan.normalizeState({
+    version: 7,
+    meta: { weekStart: "2026-10-12" },
+    settings: {
+      weekdays: [1],
+      periodCount: 2,
+      visible: { p1: true, p2: true, "custom-cleaning": true },
+      labels: { "custom-cleaning": "そうじ" },
+      customRows: [{ id: "custom-cleaning", type: "text", defaultLabel: "新しい行" }],
+      rowOrder: ["event", "morning", "p2", "custom-cleaning", "p1"]
+    },
+    cells: {
+      "2026-10-12": {
+        p1: { subject: "国語", unit: "物語文" },
+        p2: { subject: "算数", unit: "分数" },
+        "custom-cleaning": { text: "清掃" }
+      }
+    }
+  });
+
+  const rows = Array.from(plan.getVisibleRows(state), row => row.id);
+  assert.ok(rows.indexOf("p2") < rows.indexOf("custom-cleaning"));
+  assert.ok(rows.indexOf("custom-cleaning") < rows.indexOf("p1"));
+  assert.equal(plan.getRowDef("custom-cleaning", state).type, "text");
+  assert.equal(state.settings.labels["custom-cleaning"], "そうじ");
+
+  const counts = context.WEEKLY_RENDER.calculateSubjectCounts(state);
+  assert.equal(counts["国語"], 1);
+  assert.equal(counts["算数"], 1);
+  assert.equal(Object.values(counts).reduce((sum, n) => sum + n, 0), 2);
+});
+
+test("unit-name suggestions include earlier weeks and ignore blank entries", () => {
+  const context = makeContext();
+  vm.runInContext(read("js/render.js"), context, { filename: "js/render.js" });
+  const state = context.WEEKLY_PLAN.normalizeState({
+    version: 7,
+    meta: { weekStart: "2026-10-12" },
+    settings: {},
+    cells: {
+      "2026-10-05": { p1: { subject: "国語", unit: "物語文を読む" } },
+      "2026-10-12": { p2: { subject: "算数", unit: "分数の計算" }, p3: { subject: "理科", unit: "" } }
+    }
+  });
+  const suggestions = Array.from(context.WEEKLY_RENDER.collectUnitSuggestions(state));
+  assert.ok(suggestions.includes("物語文を読む"));
+  assert.ok(suggestions.includes("分数の計算"));
+  assert.equal(suggestions.includes(""), false);
+});
