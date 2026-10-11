@@ -2210,7 +2210,7 @@ body.share-view .preview-top p {
 }
 
 body.share-view .app-header {
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
 }
 
 body.share-view .header-actions {
