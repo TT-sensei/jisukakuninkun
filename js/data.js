@@ -58,6 +58,16 @@ function toISODate(date) {
   return `${y}-${m}-${day}`;
 }
 
+function isValidISODate(value) {
+  const text = String(value || "");
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(text)) return false;
+  const parts = text.split("-").map(Number);
+  const date = new Date(parts[0], parts[1] - 1, parts[2]);
+  return date.getFullYear() === parts[0] &&
+    date.getMonth() === parts[1] - 1 &&
+    date.getDate() === parts[2];
+}
+
 function fromISODate(value) {
   const [y, m, d] = String(value).split("-").map(Number);
   return new Date(y, (m || 1) - 1, d || 1);
@@ -190,7 +200,8 @@ function normalizeState(raw) {
 
   state.version = WEEKLY_PLAN_VERSION;
 
-  state.meta.weekStart = toISODate(getMonday(fromISODate(state.meta.weekStart || base.meta.weekStart)));
+  const requestedWeekStart = isValidISODate(state.meta.weekStart) ? state.meta.weekStart : base.meta.weekStart;
+  state.meta.weekStart = toISODate(getMonday(fromISODate(requestedWeekStart)));
   state.settings.weekdays = (Array.isArray(state.settings.weekdays) ? state.settings.weekdays : [1,2,3,4,5])
     .map(Number)
     .filter(n => n >= 0 && n <= 6)
@@ -229,16 +240,16 @@ function normalizeState(raw) {
   }
   state.meta.notice = "";
 
-  // 欠課フラグを正規化（旧データは通常授業として扱う）
+  // セルの型を正規化する。破損・古いJSON内の文字列やnullが編集処理を壊さないようにする。
   Object.keys(state.cells).forEach(function(dateKey) {
-    const day = state.cells[dateKey];
-    if (!day || typeof day !== "object") return;
-    Object.keys(day).forEach(function(rowId) {
-      const row = getRowDef(rowId);
-      if (row && row.type === "lesson" && day[rowId] && typeof day[rowId] === "object") {
-        day[rowId].absent = !!day[rowId].absent;
+    const rawDay = state.cells[dateKey];
+    const day = rawDay && typeof rawDay === "object" && !Array.isArray(rawDay) ? rawDay : {};
+    ROW_DEFS.forEach(function(row) {
+      if (Object.prototype.hasOwnProperty.call(day, row.id)) {
+        day[row.id] = normalizeCellForRow(row, day[row.id]);
       }
     });
+    state.cells[dateKey] = day;
   });
 
   for (let day = 0; day <= 6; day += 1) {
@@ -261,6 +272,23 @@ function normalizeState(raw) {
 
 function createLessonCell(subject = "", unit = "", note = "", absent = false) {
   return { kind: "lesson", subject, unit, note, absent: !!absent };
+}
+
+function normalizeCellForRow(row, value) {
+  const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  if (row.type === "lesson") {
+    return {
+      kind: "lesson",
+      subject: String(source.subject || ""),
+      unit: String(source.unit || ""),
+      note: String(source.note || ""),
+      absent: !!source.absent
+    };
+  }
+  if (row.type === "time") {
+    return { kind: "time", time: String(source.time || "") };
+  }
+  return { kind: "text", text: String(source.text || "") };
 }
 
 function createTextCell(text = "") {
@@ -291,18 +319,25 @@ function getRowDef(rowId) {
 }
 
 function getCell(state, dateKey, rowId) {
-  const day = state.cells[dateKey] || (state.cells[dateKey] = {});
+  if (!state.cells || typeof state.cells !== "object" || Array.isArray(state.cells)) state.cells = {};
+  const currentDay = state.cells[dateKey];
+  const day = currentDay && typeof currentDay === "object" && !Array.isArray(currentDay)
+    ? currentDay
+    : (state.cells[dateKey] = {});
   const row = getRowDef(rowId);
   const existing = day[rowId];
-  if (existing) return existing;
 
-  let created;
-  if (row && row.type === "lesson") created = createLessonCell();
-  else if (row && row.type === "time") created = createTimeCell();
-  else created = createTextCell();
-
-  day[rowId] = created;
-  return created;
+  if (row) {
+    if (!existing || typeof existing !== "object" || Array.isArray(existing)) {
+      day[rowId] = normalizeCellForRow(row, null);
+    } else {
+      day[rowId] = normalizeCellForRow(row, existing);
+    }
+    return day[rowId];
+  }
+  if (existing && typeof existing === "object" && !Array.isArray(existing)) return existing;
+  day[rowId] = createTextCell();
+  return day[rowId];
 }
 
 function setCell(state, dateKey, rowId, cell) {
