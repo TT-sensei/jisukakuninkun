@@ -351,3 +351,31 @@ test("moving a lesson transfers its contents only to an empty visible slot", () 
   assert.equal(holiday.ok, false);
   assert.equal(plan.getCell(state, "2026-10-13", "p1").subject, "算数");
 });
+
+
+test("annual standard hours normalize safely and compare with saved year-to-date lesson counts", () => {
+  const context = makeContext();
+  const plan = context.WEEKLY_PLAN;
+  const state = plan.normalizeState({
+    version: 7,
+    meta: { weekStart: "2026-10-12" },
+    settings: {
+      weekdays: [1, 2, 3, 4, 5],
+      periodCount: 2,
+      visible: { p1: true, p2: true },
+      annualHours: { "国語": "175", "算数": 175.4, "理科": -2, "社会": 5000, "音楽": "bad" }
+    },
+    cells: {
+      "2026-10-12": { p1: { subject: "国語", unit: "物語", absent: false }, p2: { subject: "算数", unit: "分数", absent: false } },
+      "2026-10-13": { p1: { subject: "国語", unit: "物語", absent: false } }
+    }
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(state.settings.annualHours)), { "国語": 175, "算数": 175 });
+  vm.runInContext(read("js/render.js"), context, { filename: "js/render.js" });
+  const counts = context.WEEKLY_RENDER.calculateSubjectCountsForRange(state, "2026-04-01", "2026-10-18");
+  assert.equal(counts["国語"], 2);
+  assert.equal(counts["算数"], 1);
+  assert.match(context.WEEKLY_RENDER.renderAnnualTargetSummary(state, counts), /あと 173時間/);
+  assert.match(context.WEEKLY_RENDER.renderAnnualTargetSummary(state, counts), /あと 174時間/);
+  assert.doesNotMatch(context.WEEKLY_RENDER.renderAnnualTargetSummary(state, counts), /社会/);
+});
