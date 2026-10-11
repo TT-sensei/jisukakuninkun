@@ -390,3 +390,45 @@ test("annual holiday importer is available and keeps manual annual planning supp
   assert.ok(editor.includes("WEEKLY_PLAN.getAnnualHolidayForDate(WEEKLY_STATE.state, date)"));
   assert.ok(editor.includes("手動での祝日登録"));
 });
+
+
+test("annual CSV import validates all rows and skips exact duplicates without overwriting existing entries", () => {
+  const context = makeContext();
+  const alerts = [];
+  context.alert = (message) => alerts.push(String(message));
+  vm.runInContext(read("js/state.js"), context, { filename: "js/state.js" });
+  vm.runInContext(read("js/render.js"), context, { filename: "js/render.js" });
+  vm.runInContext(read("js/editor.js"), context, { filename: "js/editor.js" });
+  const state = context.WEEKLY_STATE.state;
+  state.calendar.annual.push(context.WEEKLY_PLAN.createAnnualEntry({
+    startDate: "2026-04-06", endDate: "2026-04-06", kind: "event", name: "始業式"
+  }));
+
+  const result = context.WEEKLY_EDITOR.importAnnualCSVText(
+    "startDate,endDate,kind,name\r\n2026-04-06,,event,始業式\r\n2026-04-07,,event,入学式\r\n"
+  );
+  assert.equal(result.ok, true);
+  assert.equal(result.imported, 1);
+  assert.equal(result.skipped, 1);
+  assert.equal(state.calendar.annual.length, 2);
+  assert.equal(state.calendar.annual[1].name, "入学式");
+
+  const before = state.calendar.annual.length;
+  const invalid = context.WEEKLY_EDITOR.importAnnualCSVText(
+    "startDate,endDate,kind,name\r\n2026-04-08,,event,遠足\r\n2026-99-99,,event,壊れた日付\r\n"
+  );
+  assert.equal(invalid.ok, false);
+  assert.equal(state.calendar.annual.length, before, "invalid CSV must not partially import rows");
+  assert.match(alerts.at(-1), /行目/);
+});
+
+test("annual CSV parser supports Japanese headers and quoted commas", () => {
+  const context = makeContext();
+  vm.runInContext(read("js/editor.js"), context, { filename: "js/editor.js" });
+  const parsed = context.WEEKLY_EDITOR.parseAnnualCSV(
+    "開始日,終了日,種類,名称\n2026-05-01,,行事,\"遠足, 校外学習\"\n"
+  );
+  assert.equal(parsed.length, 1);
+  assert.equal(parsed[0].name, "遠足, 校外学習");
+  assert.equal(parsed[0].kind, "event");
+});

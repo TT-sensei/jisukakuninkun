@@ -648,6 +648,10 @@ function renderAnnualModal(state) {
       '<p class="settings-explain">無料の祝日データから、選択中の週が属する年度（4月〜翌年3月）の祝日を登録します。登録済みの行事は残し、同じ日付の祝日は重複登録しません。</p>' +
       '<button type="button" class="header-button secondary-button" id="annualImportHolidays">祝日を自動登録</button>' +
       '<p class="mini-help">初回登録時はインターネット接続が必要です。登録後は端末に保存されます。</p></section>' +
+    '<section class="settings-section annual-csv-section"><div class="section-heading"><div><span class="eyebrow">CSV</span><h3>年間予定をまとめて登録</h3></div></div>' +
+      '<p class="settings-explain">学校の年間行事予定をCSVで読み込めます。先にテンプレートを保存し、開始日・終了日・種類・名称を入力してください。読み込みは追加方式で、既存の予定は削除・上書きしません。</p>' +
+      '<div class="dialog-actions"><button type="button" class="secondary-button" id="annualCSVTemplate">CSVテンプレート</button><button type="button" class="header-button secondary-button" id="annualCSVImportButton">CSVを読み込む</button><input id="annualCSVInput" type="file" accept=".csv,text/csv" hidden></div>' +
+      '<p class="mini-help">日付は YYYY-MM-DD、種類は「行事」または「祝日」。同じ内容は重複登録しません。</p></section>' +
     '<section class="settings-section annual-add-section"><div class="section-heading"><div><span class="eyebrow">ADD</span><h3>年間予定を追加</h3></div><span class="mini-help">1日だけなら終了日は空欄でOK</span></div>' +
       '<div class="annual-form-grid">' +
         '<label class="field"><span>開始日</span><input id="annualStartDate" type="date" value="' + escapeHTML(today) + '"></label>' +
