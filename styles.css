@@ -2199,7 +2199,9 @@ body.share-view .plan-cell.test-highlight {
 
 
 /* 共有URLは閲覧専用。編集・設定・読み込み操作を画面から隠す。 */
-body.share-view .header-actions > :not(#printButton),
+body.share-view .header-actions > :not(#printButton):not(.action-group-primary),
+body.share-view .header-actions .action-group:not(.action-group-primary),
+body.share-view .header-actions .action-group-primary > :not(#printButton),
 body.share-view .week-nav button,
 body.share-view .settings-panel,
 body.share-view .preview-tools,
