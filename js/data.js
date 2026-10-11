@@ -182,14 +182,15 @@ function normalizeState(raw) {
     calendar: {
       annual: Array.isArray(source.calendar && source.calendar.annual)
         ? source.calendar.annual.map(function(entry) {
-            const startDate = normalizeAnnualDate(entry.startDate || entry.date);
-            const endDate = normalizeAnnualDate(entry.endDate || entry.startDate || entry.date) || startDate;
+            const item = entry && typeof entry === "object" && !Array.isArray(entry) ? entry : {};
+            const startDate = normalizeAnnualDate(item.startDate || item.date);
+            const endDate = normalizeAnnualDate(item.endDate || item.startDate || item.date) || startDate;
             return {
-              id: String(entry.id || ""),
+              id: String(item.id || ""),
               startDate,
               endDate: endDate && endDate >= startDate ? endDate : startDate,
-              kind: entry.kind === "holiday" ? "holiday" : "event",
-              name: String(entry.name || entry.eventName || "").trim()
+              kind: item.kind === "holiday" ? "holiday" : "event",
+              name: String(item.name || item.eventName || "").trim()
             };
           }).filter(function(entry) {
             return entry.name && entry.startDate;
@@ -242,6 +243,10 @@ function normalizeState(raw) {
 
   // セルの型を正規化する。破損・古いJSON内の文字列やnullが編集処理を壊さないようにする。
   Object.keys(state.cells).forEach(function(dateKey) {
+    if (!isValidISODate(dateKey)) {
+      delete state.cells[dateKey];
+      return;
+    }
     const rawDay = state.cells[dateKey];
     const day = rawDay && typeof rawDay === "object" && !Array.isArray(rawDay) ? rawDay : {};
     ROW_DEFS.forEach(function(row) {
@@ -255,7 +260,10 @@ function normalizeState(raw) {
   for (let day = 0; day <= 6; day += 1) {
     if (!state.timetable[day] || typeof state.timetable[day] !== "object") state.timetable[day] = {};
     for (let period = 1; period <= 8; period += 1) {
-      state.timetable[day][period] = state.timetable[day][period] || "";
+      const subject = String(state.timetable[day][period] || "");
+      state.timetable[day][period] = SUBJECTS.some(function(item) { return item.id === subject; })
+        ? subject
+        : "";
     }
   }
 
@@ -365,7 +373,7 @@ function getSubject(subjectId) {
 
 function normalizeAnnualDate(value) {
   const text = String(value || "");
-  return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : "";
+  return isValidISODate(text) ? text : "";
 }
 
 function getAnnualEntriesForDate(state, dateKey) {
