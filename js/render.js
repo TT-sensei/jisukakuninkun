@@ -376,6 +376,10 @@ function renderSummary(state) {
 function renderSidebar(state, selected) {
   const target = document.getElementById("editorPanel");
   if (!target) return;
+  const activePane = ["input", "hours", "schedule", "settings"].includes(target.dataset.activePane)
+    ? target.dataset.activePane
+    : "input";
+  target.dataset.activePane = activePane;
 
   const current = selected && selected.dateKey !== "__week__" ? WEEKLY_PLAN.getCell(state, selected.dateKey, selected.rowId) : null;
   const currentRow = selected && selected.dateKey !== "__week__" ? WEEKLY_PLAN.getRowDef(selected.rowId) : null;
@@ -488,8 +492,14 @@ function renderSidebar(state, selected) {
       '<div class="dashboard-progress"><span style="width:' + (lessonSlots ? Math.round(filledSlots / lessonSlots * 100) : 0) + '%"></span></div>' +
       '<div class="dashboard-progress-note"><span>' + filledSlots + ' / ' + lessonSlots + ' コマ入力済み</span><span>' +
       (holidayCount ? holidayCount + '日休み' : '休日なし') + '・' + noteCount + '件の授業メモ</span></div></section>' +
+    '<nav class="dashboard-tabs" aria-label="便利機能の表示">' +
+      '<button type="button" class="dashboard-tab" data-dashboard-tab="input" aria-pressed="false">入力</button>' +
+      '<button type="button" class="dashboard-tab" data-dashboard-tab="hours" aria-pressed="false">時数</button>' +
+      '<button type="button" class="dashboard-tab" data-dashboard-tab="schedule" aria-pressed="false">予定</button>' +
+      '<button type="button" class="dashboard-tab" data-dashboard-tab="settings" aria-pressed="false">保存・設定</button>' +
+    '</nav>' +
 
-    '<section class="dashboard-section bulk-unit-card"><div class="dashboard-section-head"><div><span class="eyebrow">QUICK PLAN</span><h3>単元をまとめて配置</h3></div></div>' +
+    '<section class="dashboard-section bulk-unit-card" data-dashboard-group="input"><div class="dashboard-section-head"><div><span class="eyebrow">QUICK PLAN</span><h3>単元をまとめて配置</h3></div></div>' +
       '<p class="dashboard-empty">今週の空いているコマに、選んだ教科と単元名を順番に入れます。入力済みのコマは変更しません。</p>' +
       '<label class="field"><span>教科</span><select id="bulkUnitSubject"><option value="">教科を選択</option>' +
         WEEKLY_PLAN.SUBJECTS.map(function(subject) { return '<option value="' + escapeHTML(subject.id) + '">' + escapeHTML(subject.label) + '</option>'; }).join("") +
@@ -501,10 +511,10 @@ function renderSidebar(state, selected) {
       '<button type="button" class="ghost-button dashboard-action" id="copyPreviousWeekLessons">前週の授業を空きコマにコピー</button>' +
       '<p class="dashboard-settings-note">前週の同じ曜日・時間目から、授業内容だけをコピーします。現在の入力は上書きしません。</p></section>' +
 
-    '<section class="dashboard-section"><div class="dashboard-section-head"><div><span class="eyebrow">SUBJECT HOURS</span><h3>教科別の時数</h3></div><span class="dashboard-count-total">' +
+    '<section class="dashboard-section" data-dashboard-group="hours"><div class="dashboard-section-head"><div><span class="eyebrow">SUBJECT HOURS</span><h3>教科別の時数</h3></div><span class="dashboard-count-total">' +
       total + '時間</span></div><div class="dashboard-subject-grid">' + (subjects || '<span class="count-empty">教科を入力すると、ここに集計されます</span>') + '</div></section>' +
 
-    '<section class="dashboard-section range-count-card"><div class="dashboard-section-head"><div><span class="eyebrow">HOUR TRACKER</span><h3>月・年度の時数</h3></div></div>' +
+    '<section class="dashboard-section range-count-card" data-dashboard-group="hours"><div class="dashboard-section-head"><div><span class="eyebrow">HOUR TRACKER</span><h3>月・年度の時数</h3></div></div>' +
       (function() {
         const selectedWeek = WEEKLY_PLAN.fromISODate(state.meta.weekStart);
         const monthStart = WEEKLY_PLAN.toISODate(new Date(selectedWeek.getFullYear(), selectedWeek.getMonth(), 1));
@@ -525,22 +535,27 @@ function renderSidebar(state, selected) {
       })() +
       '<p class="dashboard-settings-note">保存済みの週案から集計します。未入力の授業は数えません。年間予定の祝日と欠課は除外します。</p></section>' +
 
-    '<section class="dashboard-section dashboard-two-column"><div><div class="dashboard-section-head"><div><span class="eyebrow">THIS WEEK</span><h3>今週の予定</h3></div></div>' +
+    '<section class="dashboard-section dashboard-two-column" data-dashboard-group="schedule"><div><div class="dashboard-section-head"><div><span class="eyebrow">THIS WEEK</span><h3>今週の予定</h3></div></div>' +
       (events ? '<ul class="dashboard-events">' + events + '</ul>' : '<p class="dashboard-empty">年間予定はありません。</p>') +
       '<button type="button" class="ghost-button dashboard-action" id="sideAnnual">年間予定を確認</button></div>' +
     '<div><div class="dashboard-section-head"><div><span class="eyebrow">TIMETABLE</span><h3>時間割</h3></div></div><p class="dashboard-timetable-status">' +
       (timetableTotal ? timetableTotal + "コマ登録済み" : "まだ登録されていません") + '</p><button type="button" class="secondary-button dashboard-action" id="sideTimetable">時間割を確認・登録</button></div></section>' +
 
-    '<section class="selection-card convenience-card dashboard-detail"><div class="selection-card-head"><div><span class="eyebrow">QUICK TOOLS</span><h2>選択中のコマ</h2></div></div>' +
+    '<section class="selection-card convenience-card dashboard-detail" data-dashboard-group="input"><div class="selection-card-head"><div><span class="eyebrow">QUICK TOOLS</span><h2>選択中のコマ</h2></div></div>' +
       detail + '</section>' +
 
-    '<section class="settings-section dashboard-data-card"><div class="section-heading"><div><span class="eyebrow">DATA</span><h3>データを保管する</h3></div></div>' +
+    '<section class="settings-section dashboard-data-card" data-dashboard-group="settings"><div class="section-heading"><div><span class="eyebrow">DATA</span><h3>データを保管する</h3></div></div>' +
       '<p class="dashboard-settings-note">別の端末でも使うなら、JSONを書き出してGoogle Driveに保存しておくと安心です。</p>' +
       '<label class="field dashboard-drive-field"><span>Google Driveの保管フォルダ</span><input id="driveFolderUrl" type="url" value="' + escapeHTML(getDriveFolderUrl()) + '" placeholder="DriveフォルダのURLを貼り付け"></label>' +
       '<div class="dashboard-data-actions"><button type="button" class="secondary-button" id="openDriveFolder">Google Driveを開く</button><button type="button" class="ghost-button" id="dashboardExport">JSONを書き出す</button><button type="button" class="ghost-button" id="dashboardImport">JSONを読み込む</button></div>' +
       '<p class="dashboard-settings-note dashboard-drive-note">このアプリからDriveへ直接保存するのではなく、JSONをDriveに保管する方式です。</p></section>' +
-    '<section class="settings-section summary-tool-card dashboard-settings-card"><div class="section-heading"><div><span class="eyebrow">SETTINGS</span><h3>週案の基本設定</h3></div>' +
+    '<section class="settings-section summary-tool-card dashboard-settings-card" data-dashboard-group="settings"><div class="section-heading"><div><span class="eyebrow">SETTINGS</span><h3>週案の基本設定</h3></div>' +
       '<button type="button" class="ghost-button" id="openSettings">設定を開く</button></div><p class="dashboard-settings-note">曜日・授業時数・行の表示・印刷レイアウトを調整できます。</p></section>';
+  target.querySelectorAll("[data-dashboard-tab]").forEach(function(button) {
+    const active = button.dataset.dashboardTab === activePane;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
 }
 function renderSelectedEditor() { return ""; }
 
