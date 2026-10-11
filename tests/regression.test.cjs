@@ -292,3 +292,33 @@ test("previous-week lesson copy fills empty cells only and skips absences and ho
   assert.equal(plan.getCell(state, "2026-10-12", "p2").unit, "分数");
   assert.equal(plan.getCell(state, "2026-10-13", "p1").subject, "");
 });
+
+
+test("monthly and school-year counts include saved weeks and exclude absences and holidays", () => {
+  const context = makeContext();
+  vm.runInContext(read("js/render.js"), context, { filename: "js/render.js" });
+  const plan = context.WEEKLY_PLAN;
+  const state = plan.normalizeState({
+    version: 7,
+    meta: { weekStart: "2026-10-12" },
+    settings: { weekdays: [1, 2, 3, 4, 5], periodCount: 2, visible: { p1: true, p2: true } },
+    cells: {
+      "2026-04-06": { p1: { subject: "国語", unit: "春", absent: false } },
+      "2026-10-05": { p1: { subject: "算数", unit: "分数", absent: false }, p2: { subject: "国語", unit: "物語", absent: true } },
+      "2026-10-12": { p1: { subject: "理科", unit: "水", absent: false }, p2: { subject: "算数", unit: "計算", absent: false } },
+      "2026-10-13": { p1: { subject: "国語", unit: "物語", absent: false } },
+      "2026-11-02": { p1: { subject: "社会", unit: "歴史", absent: false } }
+    },
+    calendar: { annual: [{ id: "hour-count-holiday", startDate: "2026-10-13", endDate: "2026-10-13", kind: "holiday", name: "祝日" }] }
+  });
+  const month = context.WEEKLY_RENDER.calculateSubjectCountsForRange(state, "2026-10-01", "2026-10-31");
+  assert.equal(month["算数"], 2);
+  assert.equal(month["理科"], 1);
+  assert.equal(month["国語"], undefined);
+  assert.equal(month["社会"], undefined);
+  const yearToDate = context.WEEKLY_RENDER.calculateSubjectCountsForRange(state, "2026-04-01", "2026-10-18");
+  assert.equal(yearToDate["国語"], 1);
+  assert.equal(yearToDate["算数"], 2);
+  assert.equal(yearToDate["理科"], 1);
+  assert.equal(yearToDate["社会"], undefined);
+});

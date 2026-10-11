@@ -2331,3 +2331,7 @@ body.share-view #planPreview .notice-footer-body {
 .bulk-unit-card .field{margin-top:8px;margin-bottom:0}.bulk-unit-card .field input,.bulk-unit-card .field select{width:100%;min-width:0}.bulk-unit-card .dashboard-empty{margin:6px 0 8px}.bulk-unit-card .dashboard-action{margin-top:10px}.bulk-unit-card .dashboard-settings-note{margin-bottom:0}
 
 .bulk-unit-card #copyPreviousWeekLessons{margin-top:6px}
+
+
+/* Monthly and school-year lesson-hour tracker */
+.range-count-card{display:grid;gap:10px}.range-count-block{padding-top:8px;border-top:1px solid var(--line)}.range-count-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;color:var(--muted);font-weight:750}.range-count-head strong{font-size:16px;color:var(--ink)}.range-count-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-top:7px}.range-count-item{display:flex;align-items:center;justify-content:space-between;gap:4px;min-width:0;padding:5px 6px;border:1px solid var(--line);border-radius:6px;font-size:10px}.range-count-item span{display:flex;align-items:center;gap:4px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.range-count-item i{width:6px;height:6px;flex:0 0 auto;border-radius:50%}.range-count-item strong{font-size:11px}@media(max-width:700px){.range-count-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}

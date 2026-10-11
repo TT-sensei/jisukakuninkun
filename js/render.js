@@ -222,6 +222,38 @@ function calculateSubjectCounts(state) {
   return counts;
 }
 
+function calculateSubjectCountsForRange(state, startDate, endDate) {
+  const counts = {};
+  if (!WEEKLY_PLAN.isValidISODate(startDate) || !WEEKLY_PLAN.isValidISODate(endDate) || startDate > endDate) return counts;
+  const visibleWeekdays = new Set(state.settings.weekdays || [1, 2, 3, 4, 5]);
+  Object.keys(state.cells || {}).sort().forEach(function(dateKey) {
+    if (!WEEKLY_PLAN.isValidISODate(dateKey) || dateKey < startDate || dateKey > endDate) return;
+    const date = WEEKLY_PLAN.fromISODate(dateKey);
+    if (!visibleWeekdays.has(date.getDay())) return;
+    if (WEEKLY_PLAN.getAnnualHolidayForDate(state, dateKey)) return;
+    for (let period = 1; period <= state.settings.periodCount; period += 1) {
+      const rowId = "p" + period;
+      if (state.settings.visible[rowId] === false) continue;
+      const cell = WEEKLY_PLAN.getCell(state, dateKey, rowId);
+      if (!cell || !cell.subject || cell.absent) continue;
+      counts[cell.subject] = (counts[cell.subject] || 0) + 1;
+    }
+  });
+  return counts;
+}
+
+function renderRangeCountSummary(label, counts) {
+  const total = Object.values(counts).reduce(function(sum, value) { return sum + value; }, 0);
+  const items = WEEKLY_PLAN.SUBJECTS.filter(function(subject) { return counts[subject.id]; }).map(function(subject) {
+    return '<div class="range-count-item"><span><i style="background:' + escapeHTML(subject.color) + '"></i>' +
+      escapeHTML(subject.label) + '</span><strong>' + counts[subject.id] + '</strong></div>';
+  }).join("");
+  return '<div class="range-count-block"><div class="range-count-head"><span>' + escapeHTML(label) +
+    '</span><strong>' + total + '時間</strong></div>' +
+    (items ? '<div class="range-count-grid">' + items + '</div>' : '<p class="dashboard-empty">この期間の授業入力はまだありません。</p>') +
+    '</div>';
+}
+
 function renderCountRow(state, dates, counts) {
   const total = Object.values(counts).reduce(function(sum, value) { return sum + value; }, 0);
   const subjectSummary = WEEKLY_PLAN.SUBJECTS.filter(function(subject) {
@@ -435,6 +467,25 @@ function renderSidebar(state, selected) {
     '<section class="dashboard-section"><div class="dashboard-section-head"><div><span class="eyebrow">SUBJECT HOURS</span><h3>教科別の時数</h3></div><span class="dashboard-count-total">' +
       total + '時間</span></div><div class="dashboard-subject-grid">' + (subjects || '<span class="count-empty">教科を入力すると、ここに集計されます</span>') + '</div></section>' +
 
+    '<section class="dashboard-section range-count-card"><div class="dashboard-section-head"><div><span class="eyebrow">HOUR TRACKER</span><h3>月・年度の時数</h3></div></div>' +
+      (function() {
+        const selectedWeek = WEEKLY_PLAN.fromISODate(state.meta.weekStart);
+        const monthStart = WEEKLY_PLAN.toISODate(new Date(selectedWeek.getFullYear(), selectedWeek.getMonth(), 1));
+        const monthEnd = WEEKLY_PLAN.toISODate(new Date(selectedWeek.getFullYear(), selectedWeek.getMonth() + 1, 0));
+        const schoolYear = selectedWeek.getMonth() >= 3 ? selectedWeek.getFullYear() : selectedWeek.getFullYear() - 1;
+        const yearStart = schoolYear + "-04-01";
+        const weekEndDate = new Date(selectedWeek);
+        weekEndDate.setDate(weekEndDate.getDate() + 6);
+        const yearEndDate = new Date(schoolYear + 1, 2, 31);
+        const cumulativeEnd = WEEKLY_PLAN.toISODate(weekEndDate < yearEndDate ? weekEndDate : yearEndDate);
+        const monthCounts = calculateSubjectCountsForRange(state, monthStart, monthEnd);
+        const yearCounts = calculateSubjectCountsForRange(state, yearStart, cumulativeEnd);
+        const endDate = WEEKLY_PLAN.fromISODate(cumulativeEnd);
+        return renderRangeCountSummary((selectedWeek.getMonth() + 1) + "月の時数", monthCounts) +
+          renderRangeCountSummary("年度累計（4/1〜" + (endDate.getMonth() + 1) + "/" + endDate.getDate() + "）", yearCounts);
+      })() +
+      '<p class="dashboard-settings-note">保存済みの週案から集計します。未入力の授業は数えません。年間予定の祝日と欠課は除外します。</p></section>' +
+
     '<section class="dashboard-section dashboard-two-column"><div><div class="dashboard-section-head"><div><span class="eyebrow">THIS WEEK</span><h3>今週の予定</h3></div></div>' +
       (events ? '<ul class="dashboard-events">' + events + '</ul>' : '<p class="dashboard-empty">年間予定はありません。</p>') +
       '<button type="button" class="ghost-button dashboard-action" id="sideAnnual">年間予定を確認</button></div>' +
@@ -563,6 +614,7 @@ window.WEEKLY_RENDER = {
   renderSidebar,
   renderSummary,
   calculateSubjectCounts,
+  calculateSubjectCountsForRange,
   collectUnitSuggestions,
   updatePrintLessonView,
   updatePrintTextView,
