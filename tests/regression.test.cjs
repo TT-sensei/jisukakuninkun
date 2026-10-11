@@ -641,3 +641,43 @@ test("choosing a subject preserves the grid DOM while absence still rerenders th
   assert.equal(context.WEEKLY_PLAN.getCell(context.WEEKLY_STATE.state, dateKey, "p1").absent, true);
   assert.equal(previewRenders, 1, "absence changes the cell structure and must rebuild the grid");
 });
+
+
+test("save status distinguishes failures, read-only sharing, working, and success", () => {
+  const context = makeContext();
+  const classes = new Set();
+  const indicator = {
+    dataset: {},
+    classList: {
+      toggle(name, enabled) {
+        if (enabled) classes.add(name);
+        else classes.delete(name);
+      }
+    }
+  };
+  const status = {
+    textContent: "",
+    closest(selector) { return selector === ".status-dot" ? indicator : null; }
+  };
+  context.document.getElementById = (id) => id === "saveStatus" ? status : null;
+  vm.runInContext(read("js/state.js"), context, { filename: "js/state.js" });
+
+  context.setSaveStatus("保存できませんでした");
+  assert.equal(indicator.dataset.state, "error");
+  assert.ok(classes.has("is-error"));
+  assert.ok(!classes.has("is-success"));
+
+  context.setSaveStatus("共有データを表示中（端末には保存されません）");
+  assert.equal(indicator.dataset.state, "neutral");
+  assert.ok(classes.has("is-neutral"));
+  assert.ok(!classes.has("is-error"));
+
+  context.setSaveStatus("変更中…");
+  assert.equal(indicator.dataset.state, "working");
+  assert.ok(classes.has("is-working"));
+
+  context.setSaveStatus("保存済み");
+  assert.equal(indicator.dataset.state, "success");
+  assert.equal(status.textContent, "保存済み");
+  assert.ok(classes.has("is-success"));
+});
