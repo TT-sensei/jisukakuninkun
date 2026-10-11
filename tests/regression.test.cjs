@@ -220,3 +220,42 @@ test("unit-name suggestions include earlier weeks and ignore blank entries", () 
   assert.ok(suggestions.includes("分数の計算"));
   assert.equal(suggestions.includes(""), false);
 });
+
+
+test("bulk unit placement fills only truly empty visible lesson slots and skips holidays", () => {
+  const context = makeContext();
+  const plan = context.WEEKLY_PLAN;
+  const state = plan.normalizeState({
+    version: 7,
+    meta: { weekStart: "2026-10-12" },
+    settings: {
+      weekdays: [1, 2, 3],
+      periodCount: 2,
+      visible: { p1: true, p2: true },
+      customRows: [],
+      rowOrder: plan.ROW_DEFS.map(row => row.id)
+    },
+    cells: {
+      "2026-10-12": {
+        p1: { subject: "算数", unit: "既存の単元", note: "", absent: false },
+        p2: { subject: "", unit: "", note: "メモだけ", absent: false }
+      },
+      "2026-10-13": {
+        p1: { subject: "", unit: "", note: "", absent: false }
+      },
+      "2026-10-14": {
+        p2: { subject: "国語", unit: "物語", note: "", absent: false }
+      }
+    },
+    calendar: { annual: [{ id: "holiday-test", startDate: "2026-10-13", endDate: "2026-10-13", kind: "holiday", name: "祝日" }] }
+  });
+
+  const placed = plan.fillEmptyLessonSlots(state, "理科", "水のすがた", 3);
+  assert.deepEqual(Array.from(placed, item => [item.dateKey, item.rowId]), [["2026-10-14", "p1"]]);
+  assert.equal(plan.getCell(state, "2026-10-12", "p1").unit, "既存の単元");
+  assert.equal(plan.getCell(state, "2026-10-12", "p2").note, "メモだけ");
+  assert.equal(plan.getCell(state, "2026-10-13", "p1").subject, "");
+  assert.equal(plan.getCell(state, "2026-10-14", "p1").subject, "理科");
+  assert.equal(plan.getCell(state, "2026-10-14", "p1").unit, "水のすがた");
+  assert.deepEqual(Array.from(plan.fillEmptyLessonSlots(state, "無効な教科", "単元", 2)), []);
+});
