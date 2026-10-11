@@ -339,7 +339,10 @@ function getCell(state, dateKey, rowId) {
     if (!existing || typeof existing !== "object" || Array.isArray(existing)) {
       day[rowId] = normalizeCellForRow(row, null);
     } else {
-      day[rowId] = normalizeCellForRow(row, existing);
+      const normalized = normalizeCellForRow(row, existing);
+      Object.keys(existing).forEach(function(key) { delete existing[key]; });
+      Object.assign(existing, normalized);
+      day[rowId] = existing;
     }
     return day[rowId];
   }
