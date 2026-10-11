@@ -88,7 +88,32 @@ if (typeof window !== "undefined" && window.addEventListener) {
 
 function setSaveStatus(text) {
   const el = document.getElementById("saveStatus");
-  if (el) el.textContent = text;
+  if (!el) return;
+
+  const message = String(text ?? "");
+  el.textContent = message;
+
+  const indicator = typeof el.closest === "function"
+    ? el.closest(".status-dot")
+    : el.parentElement;
+  if (!indicator) return;
+
+  let state = "success";
+  if (/保存できません|端末保存を利用できません|保存データに問題|失敗|エラー|読み込めません/.test(message)) {
+    state = "error";
+  } else if (/共有データを表示中|端末には保存されません/.test(message)) {
+    state = "neutral";
+  } else if (/変更中|印刷画面を開いています/.test(message)) {
+    state = "working";
+  }
+
+  if (indicator.dataset) indicator.dataset.state = state;
+  if (indicator.classList && typeof indicator.classList.toggle === "function") {
+    indicator.classList.toggle("is-success", state === "success");
+    indicator.classList.toggle("is-error", state === "error");
+    indicator.classList.toggle("is-neutral", state === "neutral");
+    indicator.classList.toggle("is-working", state === "working");
+  }
 }
 
 function shiftWeek(delta) {

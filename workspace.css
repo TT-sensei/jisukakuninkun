@@ -120,6 +120,21 @@ html, body {
   font-weight: 750;
 }
 
+.status-dot.is-success::before { background: #458463; }
+.status-dot.is-error::before { background: #bf463e; }
+.status-dot.is-neutral::before { background: #87949c; }
+.status-dot.is-working::before { background: #be8a2f; }
+
+.status-dot.is-error {
+  color: #a53731;
+}
+.status-dot.is-neutral {
+  color: #66747d;
+}
+.status-dot.is-working {
+  color: #87601f;
+}
+
 .status-help {
   color: #7b878e;
   font-size: 10px;
