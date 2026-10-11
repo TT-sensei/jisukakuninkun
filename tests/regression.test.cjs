@@ -469,6 +469,8 @@ test("desktop/tablet workbench renders focused panels and preserves selected tab
   context.WEEKLY_RENDER.renderSidebar(context.WEEKLY_STATE.state, null);
 
   assert.equal(panel.dataset.activePane, "hours");
+  assert.ok(panel.innerHTML.indexOf("dashboard-detail") < panel.innerHTML.indexOf("bulk-unit-card"),
+    "selected-cell editing should appear before bulk tools in the Input view");
   for (const tab of ["input", "hours", "schedule", "settings"]) {
     assert.match(panel.innerHTML, new RegExp('data-dashboard-tab="' + tab + '"'));
     assert.match(panel.innerHTML, new RegExp('data-dashboard-group="' + tab + '"'));
@@ -497,6 +499,7 @@ test("Enter navigation advances cells while preserving IME conversion behavior",
   const context = makeContext();
   const listeners = {};
   const editorPanel = { dataset: {}, querySelectorAll() { return []; } };
+  const settingsPanel = { scrollTop: 450 };
   const cells = [];
   const makeCell = (date, rowId) => {
     const cell = {
@@ -526,7 +529,7 @@ test("Enter navigation advances cells while preserving IME conversion behavior",
 
   context.document.getElementById = (id) => id === "editorPanel" ? editorPanel : null;
   context.document.querySelectorAll = () => cells;
-  context.document.querySelector = () => null;
+  context.document.querySelector = (selector) => selector === ".settings-panel" ? settingsPanel : null;
   context.document.addEventListener = (type, handler) => { listeners[type] = handler; };
   context.CSS = { escape: (value) => value };
   context.WEEKLY_STATE = { state: {} };
@@ -549,6 +552,7 @@ test("Enter navigation advances cells while preserving IME conversion behavior",
   assert.equal(prevented, true);
   assert.equal(secondCell.field.focused, true);
   assert.equal(secondCell.field.selected, true);
+  assert.equal(settingsPanel.scrollTop, 0, "selecting a cell should return the workbench to the editor at the top");
   assert.equal(context.WEEKLY_EDITOR.getSelectedCell().dateKey, "2026-10-13");
   assert.equal(context.WEEKLY_EDITOR.getSelectedCell().rowId, "p1");
 
