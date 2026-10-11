@@ -211,6 +211,17 @@ function copyUnitToSameSubject() {
   setSaveStatus(copied + "コマに単元名を反映しました");
 }
 
+function copyPreviousWeekLessons() {
+  const copied = WEEKLY_PLAN.copyPreviousWeekLessons(WEEKLY_STATE.state);
+  if (!copied.length) {
+    alert("前週にコピーできる授業がないか、今週に空きコマがありません。既存の入力は変更していません。");
+    return;
+  }
+  WEEKLY_STATE.queueSave();
+  renderAllWithSelection();
+  setSaveStatus(copied.length + "コマに前週の授業をコピーしました");
+}
+
 function placeBulkUnit() {
   const subject = document.getElementById("bulkUnitSubject")?.value || "";
   const unit = (document.getElementById("bulkUnitName")?.value || "").trim();
@@ -528,6 +539,11 @@ function bindEditorEvents() {
 
     if (event.target.closest("#bulkUnitPlace")) {
       placeBulkUnit();
+      return;
+    }
+
+    if (event.target.closest("#copyPreviousWeekLessons")) {
+      copyPreviousWeekLessons();
       return;
     }
 
