@@ -780,7 +780,8 @@ function moveToAdjacentPlanCell(element, direction) {
   const nextCell = cells[currentIndex + direction];
   if (!nextCell) return false;
 
-  const nextField = nextCell.querySelector(".inline-subject, .inline-text, .inline-unit");
+  // Prefer a text-entry field in lesson cells so Enter can continue moving through the grid.
+  const nextField = nextCell.querySelector(".inline-unit, .inline-text") || nextCell.querySelector(".inline-subject");
   if (!nextField) return false;
 
   selectCell(nextCell.dataset.date, nextCell.dataset.rowId);
