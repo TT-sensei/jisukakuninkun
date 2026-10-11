@@ -125,6 +125,7 @@ function loadShareStateFromURL() {
     return "view";
   } catch (error) {
     console.warn("共有データを読み込めませんでした", error);
+    setSaveStatus("共有URLを読み込めませんでした。端末の週案は変更していません。");
     return false;
   }
 }
