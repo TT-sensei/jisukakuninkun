@@ -566,3 +566,43 @@ test("Enter navigation advances cells while preserving IME conversion behavior",
   assert.equal(context.WEEKLY_EDITOR.getSelectedCell().dateKey, "2026-10-13");
   assert.equal(context.WEEKLY_EDITOR.getSelectedCell().rowId, "p1");
 });
+
+
+test("choosing a subject preserves the grid DOM while absence still rerenders the cell", () => {
+  const context = makeContext();
+  vm.runInContext(read("js/state.js"), context, { filename: "js/state.js" });
+  vm.runInContext(read("js/render.js"), context, { filename: "js/render.js" });
+  vm.runInContext(read("js/editor.js"), context, { filename: "js/editor.js" });
+  context.CSS = { escape: (value) => value };
+
+  let previewRenders = 0;
+  let printUpdates = 0;
+  context.WEEKLY_RENDER.renderPreview = () => { previewRenders += 1; };
+  context.WEEKLY_RENDER.renderSidebar = () => {};
+  context.WEEKLY_RENDER.renderSummary = () => {};
+  context.WEEKLY_RENDER.updatePrintLessonView = () => { printUpdates += 1; };
+
+  const dateKey = context.WEEKLY_STATE.state.meta.weekStart;
+  const cellEl = {
+    dataset: { date: dateKey, rowId: "p1" },
+    classList: { toggle() {} },
+    style: { setProperty() {} },
+    closest(selector) { return selector === ".plan-cell" ? this : null; }
+  };
+  const select = { value: "国語", closest() { return cellEl; } };
+
+  context.updateInlineSubject(select);
+
+  const savedCell = context.WEEKLY_PLAN.getCell(context.WEEKLY_STATE.state, dateKey, "p1");
+  assert.equal(savedCell.subject, "国語");
+  assert.equal(savedCell.absent, false);
+  assert.equal(previewRenders, 0, "a normal subject choice must not rebuild the weekly grid");
+  assert.equal(printUpdates, 1, "the print-only cell content should be updated in place");
+  assert.equal(context.WEEKLY_EDITOR.getSelectedCell().dateKey, dateKey);
+  assert.equal(context.WEEKLY_EDITOR.getSelectedCell().rowId, "p1");
+
+  const absent = { value: "__absent__", closest() { return cellEl; } };
+  context.updateInlineSubject(absent);
+  assert.equal(context.WEEKLY_PLAN.getCell(context.WEEKLY_STATE.state, dateKey, "p1").absent, true);
+  assert.equal(previewRenders, 1, "absence changes the cell structure and must rebuild the grid");
+});
