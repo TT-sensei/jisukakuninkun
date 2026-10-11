@@ -68,8 +68,22 @@ function queueSave() {
   setSaveStatus("変更中…");
   clearTimeout(saveTimer);
   saveTimer = setTimeout(function() {
+    saveTimer = null;
     saveLocalState();
   }, 250);
+}
+
+function flushPendingSave() {
+  if (saveTimer !== null) {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+  }
+  saveLocalState();
+}
+
+if (typeof window !== "undefined" && window.addEventListener) {
+  // Flush the debounce timer when mobile browsers suspend or close the page.
+  window.addEventListener("pagehide", flushPendingSave);
 }
 
 function setSaveStatus(text) {
