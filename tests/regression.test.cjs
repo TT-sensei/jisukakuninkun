@@ -426,7 +426,7 @@ test("annual CSV parser supports Japanese headers and quoted commas", () => {
   const context = makeContext();
   vm.runInContext(read("js/editor.js"), context, { filename: "js/editor.js" });
   const parsed = context.WEEKLY_EDITOR.parseAnnualCSV(
-    "開始日,終了日,種類,名称\\n2026-05-01,,行事,\"遠足, 校外学習\"\\n"
+    "開始日,終了日,種類,名称\n2026-05-01,,行事,\"遠足, 校外学習\"\n"
   );
   assert.equal(parsed.length, 1);
   assert.equal(parsed[0].name, "遠足, 校外学習");
