@@ -153,3 +153,15 @@ test("shared URL opens read-only without overwriting local storage", () => {
   context.WEEKLY_STATE.queueSave();
   assert.equal(context.localStorage.getItem("tt-sensei-weekly-plan-v2"), localStorageBefore);
 });
+
+
+test("print CSS allows page flow, repeats table headings, and avoids clipping the sheet", () => {
+  const css = read("styles.css");
+  assert.match(css, /\.print-sheet\s*\{[^}]*max-height:\s*none\s*!important/s);
+  assert.match(css, /\.print-sheet\s*\{[^}]*break-inside:\s*auto\s*!important/s);
+  assert.match(css, /\.weekly-table thead\s*\{\s*display:\s*table-header-group/s);
+  assert.match(css, /\.weekly-table tr\s*\{\s*break-inside:\s*avoid/s);
+  assert.doesNotMatch(css, /--holiday-band-height:\s*(?:170|175)mm\s*!important/);
+  const render = read("js/render.js");
+  assert.match(render, /band\.style\.height\s*=\s*height\s*\+\s*"px"/);
+});

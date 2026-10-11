@@ -266,7 +266,7 @@ function positionHolidayOverlays() {
     const bodyRect = bodyTop.getBoundingClientRect();
     const height = Math.max(120, Math.round(bodyRect.bottom - cellRect.top));
 
-    band.style.setProperty("--holiday-band-height", height + "px");
+    band.style.height = height + "px";
   });
 }
 
