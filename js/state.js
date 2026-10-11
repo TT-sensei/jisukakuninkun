@@ -24,7 +24,7 @@ function loadLocalState() {
     } catch (backupError) {
       console.warn("週案データの復旧用コピーを保存できませんでした", backupError);
     }
-    setSaveStatus("保存データに問題があります（復旧用コピーを確認してください）");
+    setSaveStatus("保存データに問題があります（復旧用コピーを保持しました）");
     return WEEKLY_PLAN.defaultState();
   }
 }
