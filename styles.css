@@ -2198,3 +2198,57 @@ body.share-view .plan-cell.test-highlight {
     ) !important;
   }
 }
+
+
+/* 共有URLは閲覧専用。編集・設定・読み込み操作を画面から隠す。 */
+body.share-view .header-actions > :not(#printButton),
+body.share-view .week-nav button,
+body.share-view .settings-panel,
+body.share-view .preview-tools,
+body.share-view .preview-top p {
+  display: none !important;
+}
+
+body.share-view .app-header {
+  grid-template-columns: 1fr auto;
+}
+
+body.share-view .header-actions {
+  display: flex;
+  justify-self: end;
+}
+
+body.share-view .workspace {
+  display: block;
+  width: min(1800px, calc(100% - 28px));
+}
+
+body.share-view .preview-panel {
+  width: 100%;
+}
+
+body.share-view #planPreview {
+  pointer-events: none;
+  user-select: text;
+}
+
+body.share-view #planPreview .inline-notice {
+  pointer-events: none;
+}
+
+@media print {
+  body.share-view .app-header {
+    display: none !important;
+  }
+
+  body.share-view .workspace {
+    width: 100%;
+    margin: 0;
+  }
+
+  body.share-view .preview-panel {
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+}
