@@ -737,3 +737,39 @@ html, body {
     transition: none;
   }
 }
+
+
+/* Shared read-only view keeps its compact brand and the print action only. */
+body.share-view .app-header {
+  display: block;
+}
+
+body.share-view .workspace-topline {
+  display: flex;
+  justify-content: space-between;
+  min-height: 58px;
+}
+
+body.share-view .week-nav {
+  border: 0;
+  background: transparent;
+}
+
+body.share-view .header-actions {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 0;
+  padding: 0 0 8px;
+  border-top: 0;
+}
+
+body.share-view .action-group-primary {
+  display: flex;
+  justify-content: flex-end;
+}
+
+body.share-view .action-group-primary #printButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
