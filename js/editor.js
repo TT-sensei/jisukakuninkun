@@ -798,7 +798,7 @@ function bindEditorEvents() {
     if (dashboardTab) {
       const editorPanel = document.getElementById("editorPanel");
       const pane = dashboardTab.dataset.dashboardTab;
-      if (editorPanel && ["input", "hours", "schedule", "settings"].includes(pane)) {
+      if (editorPanel && ["input", "bulk", "hours", "schedule", "settings"].includes(pane)) {
         const settingsPanel = document.querySelector(".settings-panel");
         if (settingsPanel) settingsPanel.scrollTop = 0;
         editorPanel.dataset.activePane = pane;
