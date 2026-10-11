@@ -2335,3 +2335,7 @@ body.share-view #planPreview .notice-footer-body {
 
 /* Monthly and school-year lesson-hour tracker */
 .range-count-card{display:grid;gap:10px}.range-count-block{padding-top:8px;border-top:1px solid var(--line)}.range-count-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;color:var(--muted);font-weight:750}.range-count-head strong{font-size:16px;color:var(--ink)}.range-count-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-top:7px}.range-count-item{display:flex;align-items:center;justify-content:space-between;gap:4px;min-width:0;padding:5px 6px;border:1px solid var(--line);border-radius:6px;font-size:10px}.range-count-item span{display:flex;align-items:center;gap:4px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.range-count-item i{width:6px;height:6px;flex:0 0 auto;border-radius:50%}.range-count-item strong{font-size:11px}@media(max-width:700px){.range-count-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Move a lesson safely to an empty slot */
+.lesson-move-tool{margin-top:12px;padding:10px;border:1px solid var(--line);border-radius:9px;background:#fbfcfc}.lesson-move-heading{font-size:11px;font-weight:850;color:var(--ink)}.lesson-move-tool>p{margin:5px 0 8px;color:var(--muted);font-size:10px;line-height:1.5}.lesson-move-tool .field{margin:7px 0 0}.lesson-move-tool .field select{width:100%;min-width:0}.lesson-move-tool button{margin-top:9px}
