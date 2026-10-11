@@ -503,15 +503,14 @@ function renderSidebar(state, selected) {
     '<section class="selection-card convenience-card dashboard-detail" data-dashboard-group="input"><div class="selection-card-head"><div><span class="eyebrow">QUICK TOOLS</span><h2>選択中のコマ</h2></div></div>' +
       detail + '</section>' +
 
-    '<section class="dashboard-section bulk-unit-card" data-dashboard-group="bulk"><div class="dashboard-section-head"><div><span class="eyebrow">QUICK PLAN</span><h3>単元をまとめて配置</h3></div></div>' +
-      '<p class="dashboard-empty">今週の空いているコマに、選んだ教科と単元名を順番に入れます。入力済みのコマは変更しません。</p>' +
+    '<section class="dashboard-section bulk-unit-card" data-dashboard-group="bulk"><div class="dashboard-section-head"><div><span class="eyebrow">QUICK PLAN</span><h3>教科ごとの単元名を一括変更</h3></div></div>' +
+      '<p class="dashboard-empty">教科と単元名を決めると、今週の週案にあるその教科の単元名をまとめて変更します。例：算数を選び「分数のわり算」と入力すると、今週の算数のコマがすべてその単元名になります。</p>' +
       '<label class="field"><span>教科</span><select id="bulkUnitSubject"><option value="">教科を選択</option>' +
         WEEKLY_PLAN.SUBJECTS.map(function(subject) { return '<option value="' + escapeHTML(subject.id) + '">' + escapeHTML(subject.label) + '</option>'; }).join("") +
       '</select></label>' +
       '<label class="field"><span>単元名</span><input id="bulkUnitName" type="text" list="unitSuggestions" placeholder="例：分数のわり算"></label>' +
-      '<label class="field"><span>配置するコマ数</span><input id="bulkUnitCount" type="number" min="1" max="40" step="1" value="5"></label>' +
-      '<button type="button" class="secondary-button dashboard-action" id="bulkUnitPlace">空いているコマに配置</button>' +
-      '<p class="dashboard-settings-note">月曜から順に、表示中の授業コマを確認します。足りない場合は配置できた分だけ反映します。</p>' +
+      '<button type="button" class="secondary-button dashboard-action" id="bulkUnitPlace">この教科の単元名を週案全体に反映</button>' +
+      '<p class="dashboard-settings-note">選んだ教科のコマだけが対象です。入力済みの単元名も変更されます。ほかの教科・メモ・欠課は変更しません。実行前に対象コマ数を確認します。</p>' +
       '<button type="button" class="ghost-button dashboard-action" id="copyPreviousWeekLessons">前週の授業を空きコマにコピー</button>' +
       '<p class="dashboard-settings-note">前週の同じ曜日・時間目から、授業内容だけをコピーします。現在の入力は上書きしません。</p></section>' +
 

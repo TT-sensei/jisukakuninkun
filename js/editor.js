@@ -280,8 +280,6 @@ function copyPreviousWeekLessons() {
 function placeBulkUnit() {
   const subject = document.getElementById("bulkUnitSubject")?.value || "";
   const unit = (document.getElementById("bulkUnitName")?.value || "").trim();
-  const countInput = document.getElementById("bulkUnitCount");
-  const requested = Math.max(1, Math.min(40, Math.floor(Number(countInput?.value) || 1)));
   if (!subject) {
     alert("教科を選択してください。");
     return;
@@ -290,17 +288,40 @@ function placeBulkUnit() {
     alert("単元名を入力してください。");
     return;
   }
-  const placed = WEEKLY_PLAN.fillEmptyLessonSlots(WEEKLY_STATE.state, subject, unit, requested);
-  if (!placed.length) {
-    alert("配置できる空きコマがありません。既存の入力は変更していません。");
+
+  const state = WEEKLY_STATE.state;
+  const dates = WEEKLY_PLAN.getWeekDatesFromState(state).map(WEEKLY_PLAN.toISODate);
+  const lessonRows = WEEKLY_PLAN.getVisibleRows(state).filter(function(row) {
+    return row.type === "lesson";
+  });
+  const targets = [];
+
+  dates.forEach(function(dateKey) {
+    if (WEEKLY_PLAN.getAnnualHolidayForDate(state, dateKey)) return;
+    lessonRows.forEach(function(row) {
+      const cell = WEEKLY_PLAN.getCell(state, dateKey, row.id);
+      if (cell.subject === subject && !cell.absent) {
+        targets.push({ dateKey: dateKey, rowId: row.id, cell: cell });
+      }
+    });
+  });
+
+  if (!targets.length) {
+    alert("今週の週案に、選んだ教科の授業コマがありません。教科を確認してください。");
     return;
   }
+
+  const subjectLabel = WEEKLY_PLAN.getSubject(subject)?.label || subject;
+  const message = "今週の" + subjectLabel + " " + targets.length + "コマの単元名を、すべて「" +
+    unit + "」に変更します。\n\nすでに入力されている単元名も上書きされます。実行しますか？";
+  if (typeof window.confirm === "function" && !window.confirm(message)) return;
+
+  targets.forEach(function(target) {
+    target.cell.unit = unit;
+  });
   WEEKLY_STATE.queueSave();
   renderAllWithSelection();
-  setSaveStatus(placed.length + "コマに単元を配置しました");
-  if (placed.length < requested) {
-    alert("空いているコマが" + placed.length + "コマだったため、配置できた分だけ反映しました。既存の入力は変更していません。");
-  }
+  setSaveStatus(subjectLabel + "の単元名を" + targets.length + "コマ更新しました");
 }
 
 function updateSideLessonField(field, value) {
