@@ -304,7 +304,11 @@ function normalizeCellForRow(row, value) {
     };
   }
   if (row.type === "time") {
-    return { kind: "time", time: String(source.time || "") };
+    const time = String(source.time || "");
+    return {
+      kind: "time",
+      time: /^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(time) ? time : ""
+    };
   }
   return { kind: "text", text: String(source.text || "") };
 }
