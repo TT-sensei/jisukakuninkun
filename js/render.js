@@ -644,6 +644,10 @@ function renderAnnualModal(state) {
   target.innerHTML =
     '<div class="settings-modal-head"><div><span class="eyebrow">CALENDAR</span><h2 id="annualTitle">年間予定</h2><p>行事や祝日を登録すると、該当週の「行事予定」へ自動で表示します。祝日はその日の全コマを休日表示にします。</p></div>' +
       '<button type="button" class="ghost-button" id="annualClose">閉じる</button></div>' +
+    '<section class="settings-section holiday-import-section"><div class="section-heading"><div><span class="eyebrow">HOLIDAYS</span><h3>' + (WEEKLY_PLAN.fromISODate(state.meta.weekStart).getMonth() >= 3 ? WEEKLY_PLAN.fromISODate(state.meta.weekStart).getFullYear() : WEEKLY_PLAN.fromISODate(state.meta.weekStart).getFullYear() - 1) + '年度の祝日</h3></div></div>' +
+      '<p class="settings-explain">無料の祝日データから、選択中の週が属する年度（4月〜翌年3月）の祝日を登録します。登録済みの行事は残し、同じ日付の祝日は重複登録しません。</p>' +
+      '<button type="button" class="header-button secondary-button" id="annualImportHolidays">祝日を自動登録</button>' +
+      '<p class="mini-help">初回登録時はインターネット接続が必要です。登録後は端末に保存されます。</p></section>' +
     '<section class="settings-section annual-add-section"><div class="section-heading"><div><span class="eyebrow">ADD</span><h3>年間予定を追加</h3></div><span class="mini-help">1日だけなら終了日は空欄でOK</span></div>' +
       '<div class="annual-form-grid">' +
         '<label class="field"><span>開始日</span><input id="annualStartDate" type="date" value="' + escapeHTML(today) + '"></label>' +
