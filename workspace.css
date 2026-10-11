@@ -376,7 +376,7 @@ html, body {
   top: -12px;
   z-index: 15;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 4px;
   margin: 12px -12px 12px;
   padding: 9px 12px;
@@ -412,6 +412,7 @@ html, body {
 }
 
 #editorPanel[data-active-pane="input"] [data-dashboard-group]:not([data-dashboard-group="input"]),
+#editorPanel[data-active-pane="bulk"] [data-dashboard-group]:not([data-dashboard-group="bulk"]),
 #editorPanel[data-active-pane="hours"] [data-dashboard-group]:not([data-dashboard-group="hours"]),
 #editorPanel[data-active-pane="schedule"] [data-dashboard-group]:not([data-dashboard-group="schedule"]),
 #editorPanel[data-active-pane="settings"] [data-dashboard-group]:not([data-dashboard-group="settings"]) {

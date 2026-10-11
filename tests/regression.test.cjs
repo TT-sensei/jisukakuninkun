@@ -471,7 +471,7 @@ test("desktop/tablet workbench renders focused panels and preserves selected tab
   assert.equal(panel.dataset.activePane, "hours");
   assert.ok(panel.innerHTML.indexOf("dashboard-detail") < panel.innerHTML.indexOf("bulk-unit-card"),
     "selected-cell editing should appear before bulk tools in the Input view");
-  for (const tab of ["input", "hours", "schedule", "settings"]) {
+  for (const tab of ["input", "bulk", "hours", "schedule", "settings"]) {
     assert.match(panel.innerHTML, new RegExp('data-dashboard-tab="' + tab + '"'));
     assert.match(panel.innerHTML, new RegExp('data-dashboard-group="' + tab + '"'));
   }
