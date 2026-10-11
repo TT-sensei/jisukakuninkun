@@ -25,14 +25,14 @@ function isPlainObject(value) {
 function validateWeeklyPlanImport(data) {
   if (!isPlainObject(data)) throw new Error("データ全体がオブジェクトではありません。");
   if (!isPlainObject(data.meta)) throw new Error("週案の基本情報がありません。");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(data.meta.weekStart || ""))) {
+  if (!WEEKLY_PLAN.isValidISODate(data.meta.weekStart)) {
     throw new Error("週の開始日が見つからないか、形式が正しくありません。");
   }
   if (!isPlainObject(data.cells)) throw new Error("授業データがありません。");
 
   const dateKeys = Object.keys(data.cells);
   const hasDate = dateKeys.some(function(key) {
-    return /^\d{4}-\d{2}-\d{2}$/.test(key) && isPlainObject(data.cells[key]);
+    return WEEKLY_PLAN.isValidISODate(key) && isPlainObject(data.cells[key]);
   });
   if (!hasDate) throw new Error("読み込める日付別の週案データがありません。");
 
