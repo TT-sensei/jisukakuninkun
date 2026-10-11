@@ -116,6 +116,18 @@ function makeTimetableTemplate() {
   return template;
 }
 
+function normalizeAnnualHours(value) {
+  const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const result = {};
+  SUBJECTS.forEach(function(subject) {
+    const raw = source[subject.id];
+    if (raw === "" || raw === null || raw === undefined) return;
+    const number = Number(raw);
+    if (Number.isFinite(number) && number >= 0 && number <= 2000) result[subject.id] = Math.round(number);
+  });
+  return result;
+}
+
 function defaultState() {
   const monday = getMonday();
   const weekStart = toISODate(monday);
@@ -154,7 +166,8 @@ function defaultState() {
         notice: true
       },
       printOrientation: "portrait",
-      showTimeCount: true
+      showTimeCount: true,
+      annualHours: {}
     },
     timetable: makeTimetableTemplate(),
     calendar: {
@@ -177,7 +190,8 @@ function normalizeState(raw) {
       labels: { ...base.settings.labels, ...((source.settings || {}).labels || {}) },
       customRows: normalizeCustomRows((source.settings || {}).customRows),
       rowOrder: Array.isArray((source.settings || {}).rowOrder) ? (source.settings || {}).rowOrder.map(String) : base.settings.rowOrder.slice(),
-      visible: { ...base.settings.visible, ...((source.settings || {}).visible || {}) }
+      visible: { ...base.settings.visible, ...((source.settings || {}).visible || {}) },
+      annualHours: normalizeAnnualHours((source.settings || {}).annualHours)
     },
     cells: { ...base.cells, ...(source.cells || {}) },
     timetable: source.timetable && typeof source.timetable === "object"
