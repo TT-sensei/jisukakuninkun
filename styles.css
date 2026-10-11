@@ -2228,12 +2228,23 @@ body.share-view .preview-panel {
 }
 
 body.share-view #planPreview {
-  pointer-events: none;
+  pointer-events: auto;
   user-select: text;
 }
 
-body.share-view #planPreview .inline-notice {
-  pointer-events: none;
+body.share-view #planPreview .inline-edit,
+body.share-view #planPreview .inline-notice,
+body.share-view #planPreview .notice-board-action,
+body.share-view #planPreview .annual-derived {
+  display: none !important;
+}
+
+body.share-view #planPreview .print-lesson,
+body.share-view #planPreview .print-text,
+body.share-view #planPreview .print-time,
+body.share-view #planPreview .notice-footer-body {
+  display: block !important;
+  visibility: visible !important;
 }
 
 @media print {
