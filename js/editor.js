@@ -528,7 +528,7 @@ function bindEditorEvents() {
 
     if (target.id === "metaWeekStart") {
       if (!target.value) {
-        // An empty date input must not silently jump the plan back to 1969.
+        // An empty date input must not silently jump the plan back to 1900.
         target.value = WEEKLY_STATE.state.meta.weekStart;
         return;
       }
