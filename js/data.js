@@ -400,6 +400,32 @@ function setCell(state, dateKey, rowId, cell) {
   state.cells[dateKey][rowId] = cell;
 }
 
+function fillEmptyLessonSlots(state, subject, unit, requestedCount) {
+  const validSubject = SUBJECTS.some(function(item) { return item.id === subject; });
+  const cleanUnit = String(unit || "").trim();
+  const limit = Math.max(1, Math.min(40, Math.floor(Number(requestedCount) || 1)));
+  if (!validSubject || !cleanUnit) return [];
+
+  const placed = [];
+  const dates = getWeekDatesFromState(state);
+  for (const date of dates) {
+    const dateKey = toISODate(date);
+    if (getAnnualHolidayForDate(state, dateKey)) continue;
+    for (let period = 1; period <= state.settings.periodCount; period += 1) {
+      const rowId = "p" + period;
+      if (state.settings.visible[rowId] === false) continue;
+      const cell = getCell(state, dateKey, rowId);
+      // Only fill truly empty slots; never overwrite existing subjects, notes, units, or absences.
+      if (cell.absent || cell.subject || String(cell.unit || "").trim() || String(cell.note || "").trim()) continue;
+      cell.subject = subject;
+      cell.unit = cleanUnit;
+      placed.push({ dateKey: dateKey, rowId: rowId });
+      if (placed.length >= limit) return placed;
+    }
+  }
+  return placed;
+}
+
 function removeCell(state, dateKey, rowId) {
   if (state.cells[dateKey]) delete state.cells[dateKey][rowId];
 }
@@ -490,6 +516,7 @@ window.WEEKLY_PLAN = {
   getAllRows,
   getCell,
   setCell,
+  fillEmptyLessonSlots,
   removeCell,
   getVisibleRows,
   getSubject,
