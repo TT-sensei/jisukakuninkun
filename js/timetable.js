@@ -178,7 +178,6 @@ function bindTimetableEvents() {
     }
 
     if (event.target.closest("#timetableApply")) {
-      saveTimetableFromForm(false);
       applyTimetableToWeek();
     }
   });
