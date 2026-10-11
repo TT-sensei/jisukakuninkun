@@ -129,7 +129,7 @@ function renderTimeCell(state, dateKey, row) {
   return '<td class="plan-cell time-cell ' + (time ? "has-content" : "is-empty") +
     '" data-date="' + escapeHTML(dateKey) + '" data-row-id="' + row.id + '">' +
       '<input class="inline-edit inline-time" data-cell-field="time" type="time" value="' + escapeHTML(time) +
-        '" aria-label="下校時刻">' +
+        '" aria-label="' + escapeHTML(state.settings.labels[row.labelKey] || state.settings.labels[row.id] || row.defaultLabel) + '">' +
       '<div class="print-time">' + escapeHTML(time) + '</div>' +
     '</td>';
 }
