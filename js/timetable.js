@@ -69,6 +69,7 @@ function renderTimetableModal() {
       '</div>' +
     '</div>';
 
+  modal.dataset.timetableCleared = "false";
   modal.classList.remove("hidden");
   timetableModalOpen = true;
 }
@@ -80,8 +81,12 @@ function closeTimetableModal() {
 }
 
 function readTimetableForm() {
+  const modal = document.getElementById("timetableModal");
+  const cleared = !!modal && modal.dataset.timetableCleared === "true";
   const current = WEEKLY_STATE.state.timetable || WEEKLY_PLAN.makeTimetableTemplate();
-  const template = JSON.parse(JSON.stringify(current));
+  const template = cleared
+    ? WEEKLY_PLAN.makeTimetableTemplate()
+    : JSON.parse(JSON.stringify(current));
 
   for (let day = 0; day <= 6; day += 1) {
     if (!template[day] || typeof template[day] !== "object") template[day] = {};
@@ -109,6 +114,8 @@ function clearTimetableForm() {
   document.querySelectorAll(".timetable-select").forEach(function(select) {
     select.value = "";
   });
+  const modal = document.getElementById("timetableModal");
+  if (modal) modal.dataset.timetableCleared = "true";
 }
 
 function applyTimetableToWeek() {
