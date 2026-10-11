@@ -710,17 +710,17 @@ function bindEditorEvents() {
         delete WEEKLY_STATE.state.settings.annualHours[subject];
       } else {
         const hours = Number(raw);
-        if (!Number.isFinite(hours) || hours < 0 || hours > 2000) {
-          alert("0〜2000時間の範囲で入力してください。");
-          target.value = "";
+        if (!Number.isInteger(hours) || hours < 0 || hours > 2000) {
+          alert("0〜2000時間の整数で入力してください。");
+          target.value = WEEKLY_STATE.state.settings.annualHours[subject] === undefined ? "" : String(WEEKLY_STATE.state.settings.annualHours[subject]);
           return;
         }
-        WEEKLY_STATE.state.settings.annualHours[subject] = Math.round(hours);
-        target.value = String(Math.round(hours));
+        WEEKLY_STATE.state.settings.annualHours[subject] = hours;
+        target.value = String(hours);
       }
       WEEKLY_STATE.queueSave();
+      // Keep the settings modal intact to preserve its scroll position while editing.
       renderAllWithSelection();
-      renderSettingsModalSafe();
       return;
     }
 
