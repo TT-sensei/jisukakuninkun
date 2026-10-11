@@ -147,6 +147,49 @@ function bindAppEvents() {
   });
 }
 
+
+function exposeRecoveryCopyIfAvailable() {
+  const recoveryKey = STORAGE_KEY + "-recovery";
+  let recoveryData = null;
+  try {
+    recoveryData = localStorage.getItem(recoveryKey);
+  } catch (error) {
+    return;
+  }
+  if (!recoveryData) return;
+
+  const actions = document.querySelector(".header-actions");
+  const importButton = document.getElementById("importButton");
+  if (!actions || !importButton || document.getElementById("recoveryExportButton")) return;
+
+  const button = document.createElement("button");
+  button.id = "recoveryExportButton";
+  button.type = "button";
+  button.className = "header-button";
+  button.textContent = "復旧データ保存";
+  button.title = "以前の保存データに問題があったときの復旧用コピーを書き出します";
+  button.setAttribute("aria-label", "復旧用の保存データを書き出す");
+  button.addEventListener("click", function() {
+    let raw = null;
+    try {
+      raw = localStorage.getItem(recoveryKey);
+    } catch (error) {
+      alert("復旧用データを読み出せませんでした。端末の保存領域を確認してください。");
+      return;
+    }
+    if (!raw) {
+      button.remove();
+      setSaveStatus("復旧用データは見つかりませんでした");
+      return;
+    }
+    if (!confirm("以前の保存データの復旧用コピーを書き出します。データに破損がある場合、読み込みできないことがあります。続けますか？")) return;
+    const date = new Date().toISOString().slice(0, 10).replaceAll("-", "");
+    downloadText("週案_復旧用データ_" + date + ".json", raw, "application/json;charset=utf-8");
+    setSaveStatus("復旧用データを書き出しました");
+  });
+  actions.insertBefore(button, importButton);
+}
+
 function startApp() {
   const shareMode = WEEKLY_SHARE.loadShareStateFromURL();
 
@@ -164,6 +207,7 @@ function startApp() {
     return;
   }
 
+  exposeRecoveryCopyIfAvailable();
   WEEKLY_EDITOR.bindEditorEvents();
   WEEKLY_TIMETABLE.bindTimetableEvents();
   WEEKLY_FILE.bindFileEvents();
