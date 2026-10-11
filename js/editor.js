@@ -113,6 +113,13 @@ function updateInlineSubject(element) {
   WEEKLY_RENDER.updatePrintLessonView(cellEl, cell);
   selectCell(dateKey, rowId);
   WEEKLY_RENDER.renderSummary(WEEKLY_STATE.state);
+
+  // Choosing a subject flows directly into unit entry, which is the common next step.
+  const unitInput = cellEl.querySelector(".inline-unit");
+  if (unitInput && typeof unitInput.focus === "function") {
+    unitInput.focus();
+    if (typeof unitInput.select === "function") unitInput.select();
+  }
 }
 
 function updateSelectedLessonField(field, value) {
@@ -767,12 +774,24 @@ function renderSettingsModalSafe() {
   WEEKLY_RENDER.renderSettingsModal(WEEKLY_STATE.state);
 }
 
+function getKeyboardEntryField(cellEl) {
+  if (!cellEl) return null;
+  const row = WEEKLY_PLAN.getRowDef(cellEl.dataset.rowId);
+  if (row && row.type === "lesson") {
+    const cell = WEEKLY_PLAN.getCell(WEEKLY_STATE.state, cellEl.dataset.date, cellEl.dataset.rowId);
+    // A blank lesson needs a subject first; a pre-filled lesson can go straight to its unit.
+    if (!cell.subject) return cellEl.querySelector(".inline-subject") || cellEl.querySelector(".inline-unit");
+    return cellEl.querySelector(".inline-unit") || cellEl.querySelector(".inline-subject");
+  }
+  return cellEl.querySelector(".inline-text, .inline-time");
+}
+
 function moveToAdjacentPlanCell(element, direction) {
   const currentCell = element && element.closest(".plan-cell");
   if (!currentCell) return false;
 
   const cells = Array.from(document.querySelectorAll(".plan-cell[data-date][data-row-id]")).filter(function(cell) {
-    return !!cell.querySelector(".inline-subject, .inline-text, .inline-unit");
+    return !!cell.querySelector(".inline-subject, .inline-text, .inline-unit, .inline-time");
   });
   const currentIndex = cells.indexOf(currentCell);
   if (currentIndex < 0) return false;
@@ -780,8 +799,7 @@ function moveToAdjacentPlanCell(element, direction) {
   const nextCell = cells[currentIndex + direction];
   if (!nextCell) return false;
 
-  // Prefer a text-entry field in lesson cells so Enter can continue moving through the grid.
-  const nextField = nextCell.querySelector(".inline-unit, .inline-text") || nextCell.querySelector(".inline-subject");
+  const nextField = getKeyboardEntryField(nextCell);
   if (!nextField) return false;
 
   selectCell(nextCell.dataset.date, nextCell.dataset.rowId);
@@ -953,7 +971,7 @@ function bindEditorEvents() {
     const target = event.target;
     // Do not intercept Enter while a Japanese IME is confirming a conversion.
     if (event.key !== "Enter" || event.isComposing || event.keyCode === 229) return;
-    if (!target || !target.matches(".inline-unit, .inline-text")) return;
+    if (!target || !target.matches(".inline-unit, .inline-text, .inline-time")) return;
     const moved = moveToAdjacentPlanCell(target, event.shiftKey ? -1 : 1);
     if (moved) event.preventDefault();
   });
