@@ -346,6 +346,10 @@ function setWeekday(value, checked) {
   }
 
   WEEKLY_STATE.state.settings.weekdays = Array.from(next).sort(function(a, b) { return a - b; });
+  if (!checked && selectedCell && selectedCell.dateKey !== "__week__" &&
+      WEEKLY_PLAN.fromISODate(selectedCell.dateKey).getDay() === value) {
+    selectedCell = null;
+  }
   WEEKLY_STATE.queueSave();
   renderAllWithSelection();
   renderSettingsModalSafe();
@@ -356,6 +360,10 @@ function setPeriodCount(value) {
   // Period count controls the available range; preserve each period's visibility preference
   // so temporarily reducing the range does not erase the user's row settings.
   WEEKLY_STATE.state.settings.periodCount = count;
+  if (selectedCell) {
+    const row = WEEKLY_PLAN.getRowDef(selectedCell.rowId);
+    if (row && row.type === "lesson" && row.period > count) selectedCell = null;
+  }
   WEEKLY_STATE.queueSave();
   renderAllWithSelection();
   renderSettingsModalSafe();
@@ -363,6 +371,7 @@ function setPeriodCount(value) {
 
 function setRowVisible(rowId, checked) {
   WEEKLY_STATE.state.settings.visible[rowId] = checked;
+  if (!checked && selectedCell && selectedCell.rowId === rowId) selectedCell = null;
   WEEKLY_STATE.queueSave();
   renderAllWithSelection();
   renderSettingsModalSafe();
