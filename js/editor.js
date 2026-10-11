@@ -108,8 +108,7 @@ function updateInlineSubject(element) {
   cell.subject = element.value;
   WEEKLY_STATE.queueSave();
 
-  // Update the print representation and counts in place. Rebuilding the whole table here
-  // would remove focus from the subject selector and slow down keyboard-driven data entry.
+  // Update the print representation and counts in place; rebuilding the grid would interrupt entry.
   WEEKLY_RENDER.updatePrintLessonView(cellEl, cell);
   selectCell(dateKey, rowId);
   WEEKLY_RENDER.renderSummary(WEEKLY_STATE.state);
