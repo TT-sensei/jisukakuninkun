@@ -317,7 +317,7 @@ test("monthly and school-year counts include saved weeks and exclude absences an
   assert.equal(month["国語"], undefined);
   assert.equal(month["社会"], undefined);
   const yearToDate = context.WEEKLY_RENDER.calculateSubjectCountsForRange(state, "2026-04-01", "2026-10-18");
-  assert.equal(yearToDate["国語"], undefined);
+  assert.equal(yearToDate["国語"], 1);
   assert.equal(yearToDate["算数"], 2);
   assert.equal(yearToDate["理科"], 1);
   assert.equal(yearToDate["社会"], undefined);
