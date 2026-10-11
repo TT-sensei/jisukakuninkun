@@ -335,6 +335,73 @@ function addAnnualEntry() {
   setSaveStatus("年間予定を追加しました");
 }
 
+async function importNationalHolidays() {
+  const selectedWeek = WEEKLY_PLAN.fromISODate(WEEKLY_STATE.state.meta.weekStart);
+  const schoolYear = selectedWeek.getMonth() >= 3 ? selectedWeek.getFullYear() : selectedWeek.getFullYear() - 1;
+  const button = document.getElementById("annualImportHolidays");
+  if (button) {
+    button.disabled = true;
+    button.textContent = "祝日データを取得中…";
+  }
+
+  try {
+    const years = [schoolYear, schoolYear + 1];
+    const responses = await Promise.all(years.map(async function(year) {
+      const response = await fetch("https://mati0516.github.io/japan-holidays/year/" + year + ".json", {
+        method: "GET",
+        cache: "no-cache"
+      });
+      if (!response.ok) throw new Error("祝日データ（" + year + "年）を取得できませんでした。");
+      const data = await response.json();
+      if (!data || typeof data !== "object" || Array.isArray(data)) {
+        throw new Error("祝日データの形式を確認できませんでした。");
+      }
+      return data;
+    }));
+
+    const holidayMap = new Map();
+    responses.forEach(function(data) {
+      Object.keys(data).forEach(function(date) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(date) && typeof data[date] === "string" && data[date].trim()) {
+          holidayMap.set(date, data[date].trim());
+        }
+      });
+    });
+
+    const imported = [];
+    holidayMap.forEach(function(name, date) {
+      const dateYear = Number(date.slice(0, 4));
+      if (dateYear !== schoolYear && dateYear !== schoolYear + 1) return;
+      const month = Number(date.slice(5, 7));
+      if ((dateYear === schoolYear && month < 4) || (dateYear === schoolYear + 1 && month >= 4)) return;
+      if (WEEKLY_PLAN.getAnnualHolidayForDate(WEEKLY_STATE.state, date)) return;
+      imported.push(WEEKLY_PLAN.createAnnualEntry({
+        startDate: date,
+        endDate: date,
+        kind: "holiday",
+        name: name
+      }));
+    });
+
+    if (!holidayMap.size) throw new Error("祝日データが空でした。");
+    WEEKLY_STATE.state.calendar.annual.push.apply(WEEKLY_STATE.state.calendar.annual, imported);
+    WEEKLY_STATE.queueSave();
+    renderAllWithSelection();
+    WEEKLY_RENDER.renderAnnualModal(WEEKLY_STATE.state);
+    setSaveStatus("祝日を" + imported.length + "件登録しました");
+    alert(imported.length
+      ? schoolYear + "年度の祝日を" + imported.length + "件登録しました。既存の行事・祝日は変更していません。"
+      : schoolYear + "年度の祝日はすでに登録済みです。追加はありませんでした。");
+  } catch (error) {
+    console.error("祝日データの取得に失敗しました", error);
+    alert("祝日データを取得できませんでした。インターネット接続を確認して、もう一度お試しください。\n手動での祝日登録はこれまでどおり利用できます。");
+  } finally {
+    if (document.getElementById("annualModal") && !document.getElementById("annualModal").classList.contains("hidden")) {
+      WEEKLY_RENDER.renderAnnualModal(WEEKLY_STATE.state);
+    }
+  }
+}
+
 function saveAnnualEntry(id) {
   const entry = WEEKLY_STATE.state.calendar.annual.find(function(item) {
     return item.id === id;
@@ -612,6 +679,10 @@ function bindEditorEvents() {
       return;
     }
 
+    if (event.target.closest("#annualImportHolidays")) {
+      importNationalHolidays();
+      return;
+    }
     if (event.target.closest("#annualAdd")) {
       addAnnualEntry();
       return;
