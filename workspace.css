@@ -724,6 +724,13 @@ html, body {
     display: none !important;
   }
 
+  /* Sticky row labels are for on-screen navigation only, never for print layout. */
+  .corner-head,
+  .row-label {
+    position: static !important;
+    box-shadow: none !important;
+  }
+
   .preview-panel {
     border: 0;
     box-shadow: none;
