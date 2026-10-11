@@ -201,6 +201,15 @@ function normalizeState(raw) {
 
   state.version = WEEKLY_PLAN_VERSION;
 
+  // Annual event IDs must be unique; duplicates otherwise make deleting one event delete several.
+  const annualIds = new Set();
+  state.calendar.annual.forEach(function(entry, index) {
+    if (!entry.id || annualIds.has(entry.id)) {
+      entry.id = "annual-import-" + (entry.startDate || "unknown") + "-" + index;
+    }
+    annualIds.add(entry.id);
+  });
+
   const requestedWeekStart = isValidISODate(state.meta.weekStart) ? state.meta.weekStart : base.meta.weekStart;
   state.meta.weekStart = toISODate(getMonday(fromISODate(requestedWeekStart)));
   state.settings.weekdays = (Array.isArray(state.settings.weekdays) ? state.settings.weekdays : [1,2,3,4,5])
