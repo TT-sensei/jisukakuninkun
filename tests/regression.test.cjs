@@ -525,6 +525,7 @@ test("Enter navigation advances cells while preserving IME conversion behavior",
     const subjectField = {
       focused: false,
       focus() { this.focused = true; },
+      matches() { return false; },
       closest(selector) { return selector === ".plan-cell" ? cell : null; }
     };
     cell.field = field;
