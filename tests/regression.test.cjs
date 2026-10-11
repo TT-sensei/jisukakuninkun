@@ -506,9 +506,10 @@ test("Enter navigation advances cells while preserving IME conversion behavior",
       dataset: { date, rowId },
       classList: { remove() {}, add() {} },
       querySelector(selector) {
-        if (selector === ".inline-subject, .inline-text, .inline-unit") return this.field;
-        if (selector === ".inline-unit, .inline-text") return this.field;
+        if (selector === ".inline-subject, .inline-text, .inline-unit, .inline-time") return this.field;
         if (selector === ".inline-subject") return this.subjectField;
+        if (selector === ".inline-unit") return this.field;
+        if (selector === ".inline-text, .inline-time") return this.field;
         return null;
       }
     };
@@ -524,6 +525,7 @@ test("Enter navigation advances cells while preserving IME conversion behavior",
     const subjectField = {
       focused: false,
       focus() { this.focused = true; },
+      matches() { return false; },
       closest(selector) { return selector === ".plan-cell" ? cell : null; }
     };
     cell.field = field;
@@ -540,8 +542,10 @@ test("Enter navigation advances cells while preserving IME conversion behavior",
   context.document.querySelector = (selector) => selector === ".settings-panel" ? settingsPanel : null;
   context.document.addEventListener = (type, handler) => { listeners[type] = handler; };
   context.CSS = { escape: (value) => value };
-  context.WEEKLY_STATE = { state: {} };
-  context.WEEKLY_RENDER = { renderSidebar() {}, renderPreview() {} };
+  const planState = context.WEEKLY_PLAN.defaultState();
+  planState.meta.weekStart = "2026-10-12";
+  context.WEEKLY_STATE = { state: planState, queueSave() {} };
+  context.WEEKLY_RENDER = { renderSidebar() {}, renderPreview() {}, renderSummary() {}, updatePrintLessonView() {} };
   vm.runInContext(read("js/editor.js"), context, { filename: "js/editor.js" });
   context.WEEKLY_EDITOR.bindEditorEvents();
 
@@ -558,12 +562,25 @@ test("Enter navigation advances cells while preserving IME conversion behavior",
     target: firstCell.field, preventDefault() { prevented = true; }
   });
   assert.equal(prevented, true);
-  assert.equal(secondCell.field.focused, true);
-  assert.equal(secondCell.field.selected, true);
-  assert.equal(secondCell.subjectField.focused, false, "navigation should focus the editable unit field, not stop at the subject dropdown");
+  assert.equal(secondCell.subjectField.focused, true, "a blank lesson should request its subject first");
+  assert.equal(secondCell.field.focused, false);
   assert.equal(settingsPanel.scrollTop, 0, "selecting a cell should return the workbench to the editor at the top");
   assert.equal(context.WEEKLY_EDITOR.getSelectedCell().dateKey, "2026-10-13");
   assert.equal(context.WEEKLY_EDITOR.getSelectedCell().rowId, "p1");
+
+  secondCell.subjectField.focused = false;
+  secondCell.field.focused = false;
+  secondCell.field.selected = false;
+  context.WEEKLY_PLAN.getCell(planState, "2026-10-13", "p1").subject = "算数";
+  prevented = false;
+  listeners.keydown({
+    key: "Enter", isComposing: false, keyCode: 13, shiftKey: false,
+    target: firstCell.field, preventDefault() { prevented = true; }
+  });
+  assert.equal(prevented, true);
+  assert.equal(secondCell.field.focused, true, "a prefilled lesson should go straight to its unit input");
+  assert.equal(secondCell.subjectField.focused, false);
+  assert.equal(secondCell.field.selected, true);
 
   prevented = false;
   listeners.keydown({
@@ -592,10 +609,17 @@ test("choosing a subject preserves the grid DOM while absence still rerenders th
   context.WEEKLY_RENDER.updatePrintLessonView = () => { printUpdates += 1; };
 
   const dateKey = context.WEEKLY_STATE.state.meta.weekStart;
+  const unitInput = {
+    focused: false,
+    selected: false,
+    focus() { this.focused = true; },
+    select() { this.selected = true; }
+  };
   const cellEl = {
     dataset: { date: dateKey, rowId: "p1" },
     classList: { toggle() {} },
     style: { setProperty() {} },
+    querySelector(selector) { return selector === ".inline-unit" ? unitInput : null; },
     closest(selector) { return selector === ".plan-cell" ? this : null; }
   };
   const select = { value: "国語", closest() { return cellEl; } };
@@ -607,6 +631,8 @@ test("choosing a subject preserves the grid DOM while absence still rerenders th
   assert.equal(savedCell.absent, false);
   assert.equal(previewRenders, 0, "a normal subject choice must not rebuild the weekly grid");
   assert.equal(printUpdates, 1, "the print-only cell content should be updated in place");
+  assert.equal(unitInput.focused, true, "choosing a subject should continue directly into unit entry");
+  assert.equal(unitInput.selected, true);
   assert.equal(context.WEEKLY_EDITOR.getSelectedCell().dateKey, dateKey);
   assert.equal(context.WEEKLY_EDITOR.getSelectedCell().rowId, "p1");
 
