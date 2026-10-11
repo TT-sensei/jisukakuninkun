@@ -60,7 +60,7 @@ function toISODate(date) {
 
 function isValidISODate(value) {
   const text = String(value || "");
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(text)) return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return false;
   const parts = text.split("-").map(Number);
   const date = new Date(parts[0], parts[1] - 1, parts[2]);
   return date.getFullYear() === parts[0] &&
