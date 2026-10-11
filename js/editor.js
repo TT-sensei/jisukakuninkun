@@ -699,6 +699,31 @@ function bindEditorEvents() {
       return;
     }
 
+    if (target.dataset.annualHours) {
+      const subject = target.dataset.annualHours;
+      const raw = target.value.trim();
+      if (!WEEKLY_PLAN.SUBJECTS.some(function(item) { return item.id === subject; })) return;
+      if (!WEEKLY_STATE.state.settings.annualHours || typeof WEEKLY_STATE.state.settings.annualHours !== "object") {
+        WEEKLY_STATE.state.settings.annualHours = {};
+      }
+      if (raw === "") {
+        delete WEEKLY_STATE.state.settings.annualHours[subject];
+      } else {
+        const hours = Number(raw);
+        if (!Number.isFinite(hours) || hours < 0 || hours > 2000) {
+          alert("0〜2000時間の範囲で入力してください。");
+          target.value = "";
+          return;
+        }
+        WEEKLY_STATE.state.settings.annualHours[subject] = Math.round(hours);
+        target.value = String(Math.round(hours));
+      }
+      WEEKLY_STATE.queueSave();
+      renderAllWithSelection();
+      renderSettingsModalSafe();
+      return;
+    }
+
     if (target.name === "printOrientation") {
       WEEKLY_STATE.state.settings.printOrientation = target.value;
       WEEKLY_STATE.queueSave();
