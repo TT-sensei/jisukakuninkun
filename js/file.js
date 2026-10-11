@@ -64,10 +64,14 @@ function importWeeklyPlanFile(file) {
         return;
       }
       const normalized = WEEKLY_PLAN.normalizeState(data);
-      WEEKLY_STATE.replaceState(normalized);
-      if (window.WEEKLY_EDITOR) WEEKLY_EDITOR.clearSelection();
-      WEEKLY_RENDER.renderPreview(WEEKLY_STATE.state);
-      WEEKLY_RENDER.renderSidebar(WEEKLY_STATE.state, null);
+      // Avoid rendering the old selected cell against the newly imported state.
+      WEEKLY_STATE.replaceState(normalized, false);
+      if (window.WEEKLY_EDITOR) {
+        WEEKLY_EDITOR.clearSelection();
+      } else {
+        WEEKLY_RENDER.renderPreview(WEEKLY_STATE.state);
+        WEEKLY_RENDER.renderSidebar(WEEKLY_STATE.state, null);
+      }
       setSaveStatus("読み込みました");
     } catch (error) {
       console.error("週案JSONの読み込みに失敗しました", error);
