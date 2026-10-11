@@ -426,6 +426,33 @@ function fillEmptyLessonSlots(state, subject, unit, requestedCount) {
   return placed;
 }
 
+function copyPreviousWeekLessons(state) {
+  const copied = [];
+  const dates = getWeekDatesFromState(state);
+  for (const date of dates) {
+    const dateKey = toISODate(date);
+    if (getAnnualHolidayForDate(state, dateKey)) continue;
+    const previousDate = new Date(date);
+    previousDate.setDate(previousDate.getDate() - 7);
+    const previousKey = toISODate(previousDate);
+    for (let period = 1; period <= state.settings.periodCount; period += 1) {
+      const rowId = "p" + period;
+      if (state.settings.visible[rowId] === false) continue;
+      const sourceDay = state.cells[previousKey] && typeof state.cells[previousKey] === "object" ? state.cells[previousKey] : {};
+      const source = normalizeCellForRow(getRowDef(rowId, state), sourceDay[rowId]);
+      if (source.absent || !(source.subject || String(source.unit || "").trim() || String(source.note || "").trim())) continue;
+      const target = getCell(state, dateKey, rowId);
+      if (target.absent || target.subject || String(target.unit || "").trim() || String(target.note || "").trim()) continue;
+      target.subject = source.subject;
+      target.unit = source.unit;
+      target.note = source.note;
+      target.absent = false;
+      copied.push({ dateKey: dateKey, rowId: rowId });
+    }
+  }
+  return copied;
+}
+
 function removeCell(state, dateKey, rowId) {
   if (state.cells[dateKey]) delete state.cells[dateKey][rowId];
 }
@@ -517,6 +544,7 @@ window.WEEKLY_PLAN = {
   getCell,
   setCell,
   fillEmptyLessonSlots,
+  copyPreviousWeekLessons,
   removeCell,
   getVisibleRows,
   getSubject,

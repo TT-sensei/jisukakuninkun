@@ -2329,3 +2329,5 @@ body.share-view #planPreview .notice-footer-body {
 
 /* Bulk lesson placement: compact, clear controls in the week desk. */
 .bulk-unit-card .field{margin-top:8px;margin-bottom:0}.bulk-unit-card .field input,.bulk-unit-card .field select{width:100%;min-width:0}.bulk-unit-card .dashboard-empty{margin:6px 0 8px}.bulk-unit-card .dashboard-action{margin-top:10px}.bulk-unit-card .dashboard-settings-note{margin-bottom:0}
+
+.bulk-unit-card #copyPreviousWeekLessons{margin-top:6px}
