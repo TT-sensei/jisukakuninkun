@@ -1,4 +1,3 @@
-
 const STORAGE_KEY = "tt-sensei-weekly-plan-v2";
 
 function loadLocalState() {
@@ -12,8 +11,13 @@ function loadLocalState() {
 }
 
 let appState = loadLocalState();
+let persistenceSuspended = false;
 
 function saveLocalState() {
+  if (persistenceSuspended) {
+    setSaveStatus("共有データを表示中（端末には保存されません）");
+    return;
+  }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
     setSaveStatus("保存済み");
@@ -23,9 +27,12 @@ function saveLocalState() {
   }
 }
 
-function replaceState(nextState, dispatch = true) {
+// Shared URLs are read-only previews. They must never overwrite the viewer's local plan.
+function replaceState(nextState, dispatch = true, persist = true) {
   appState = WEEKLY_PLAN.normalizeState(nextState);
-  saveLocalState();
+  persistenceSuspended = !persist;
+  if (persist) saveLocalState();
+  else setSaveStatus("共有データを表示中（端末には保存されません）");
   if (dispatch) window.dispatchEvent(new CustomEvent("weekly-plan:state"));
 }
 
@@ -35,6 +42,10 @@ function resetState() {
 
 let saveTimer = null;
 function queueSave() {
+  if (persistenceSuspended) {
+    setSaveStatus("共有データを表示中（端末には保存されません）");
+    return;
+  }
   setSaveStatus("変更中…");
   clearTimeout(saveTimer);
   saveTimer = setTimeout(function() {
