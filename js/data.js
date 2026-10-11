@@ -376,7 +376,7 @@ function getCell(state, dateKey, rowId) {
   const day = currentDay && typeof currentDay === "object" && !Array.isArray(currentDay)
     ? currentDay
     : (state.cells[dateKey] = {});
-  const row = getRowDef(rowId);
+  const row = getRowDef(rowId, state);
   const existing = day[rowId];
 
   if (row) {
