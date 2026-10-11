@@ -405,7 +405,7 @@ test("annual CSV import validates all rows and skips exact duplicates without ov
   }));
 
   const result = context.WEEKLY_EDITOR.importAnnualCSVText(
-    "startDate,endDate,kind,name\\r\\n2026-04-06,,event,始業式\\r\\n2026-04-07,,event,入学式\\r\\n"
+    "startDate,endDate,kind,name\r\n2026-04-06,,event,始業式\r\n2026-04-07,,event,入学式\r\n"
   );
   assert.equal(result.ok, true);
   assert.equal(result.imported, 1);
@@ -415,7 +415,7 @@ test("annual CSV import validates all rows and skips exact duplicates without ov
 
   const before = state.calendar.annual.length;
   const invalid = context.WEEKLY_EDITOR.importAnnualCSVText(
-    "startDate,endDate,kind,name\\r\\n2026-04-08,,event,遠足\\r\\n2026-99-99,,event,壊れた日付\\r\\n"
+    "startDate,endDate,kind,name\r\n2026-04-08,,event,遠足\r\n2026-99-99,,event,壊れた日付\r\n"
   );
   assert.equal(invalid.ok, false);
   assert.equal(state.calendar.annual.length, before, "invalid CSV must not partially import rows");
