@@ -1,4 +1,4 @@
-const WEEKLY_PLAN_VERSION = 6;
+const WEEKLY_PLAN_VERSION = 7;
 
 const SUBJECTS = [
   { id: "国語", label: "国語", color: "#e85b6b" },
@@ -133,6 +133,8 @@ function defaultState() {
       weekdays: [1, 2, 3, 4, 5],
       periodCount: 6,
       labels: { ...DEFAULT_LABELS },
+      customRows: [],
+      rowOrder: ROW_DEFS.map(row => row.id),
       visible: {
         event: true,
         morning: true,
@@ -173,6 +175,8 @@ function normalizeState(raw) {
       ...base.settings,
       ...(source.settings || {}),
       labels: { ...base.settings.labels, ...((source.settings || {}).labels || {}) },
+      customRows: normalizeCustomRows((source.settings || {}).customRows),
+      rowOrder: Array.isArray((source.settings || {}).rowOrder) ? (source.settings || {}).rowOrder.map(String) : base.settings.rowOrder.slice(),
       visible: { ...base.settings.visible, ...((source.settings || {}).visible || {}) }
     },
     cells: { ...base.cells, ...(source.cells || {}) },
@@ -221,7 +225,7 @@ function normalizeState(raw) {
   if (!state.settings.weekdays.length) state.settings.weekdays = [1,2,3,4,5];
 
   // 旧形式の「昼」「お知らせ」を新しい構成へ引き継ぐ
-  if (state.cells && source.version !== WEEKLY_PLAN_VERSION) {
+  if (state.cells && Number(source.version || 0) < 6) {
     const oldNotices = [];
     Object.keys(state.cells).sort().forEach(function(dateKey) {
       const day = state.cells[dateKey] || {};
@@ -258,7 +262,7 @@ function normalizeState(raw) {
     }
     const rawDay = state.cells[dateKey];
     const day = rawDay && typeof rawDay === "object" && !Array.isArray(rawDay) ? rawDay : {};
-    ROW_DEFS.forEach(function(row) {
+    getAllRows(state).forEach(function(row) {
       if (Object.prototype.hasOwnProperty.call(day, row.id)) {
         day[row.id] = normalizeCellForRow(row, day[row.id]);
       }
@@ -276,6 +280,12 @@ function normalizeState(raw) {
     }
   }
 
+  state.settings.customRows = normalizeCustomRows(state.settings.customRows);
+  const validRowIds = getAllRows(state).map(row => row.id);
+  const seenOrder = new Set();
+  state.settings.rowOrder = (Array.isArray(state.settings.rowOrder) ? state.settings.rowOrder : [])
+    .filter(id => validRowIds.includes(id) && !seenOrder.has(id) && seenOrder.add(id));
+  validRowIds.forEach(id => { if (!seenOrder.has(id)) state.settings.rowOrder.push(id); });
   state.settings.periodCount = Math.min(8, Math.max(1, Number(state.settings.periodCount) || 6));
   state.settings.printOrientation = state.settings.printOrientation === "landscape" ? "landscape" : "portrait";
 
@@ -336,8 +346,28 @@ function setWeekNotice(state, value, weekStart) {
   else delete state.meta.notices[key];
 }
 
-function getRowDef(rowId) {
-  return ROW_DEFS.find(row => row.id === rowId) || null;
+function normalizeCustomRows(rows) {
+  if (!Array.isArray(rows)) return [];
+  const seen = new Set(ROW_DEFS.map(row => row.id));
+  return rows.slice(0, 30).map(function(item, index) {
+    const row = item && typeof item === "object" ? item : {};
+    let id = String(row.id || "custom-" + (index + 1)).replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40);
+    if (!id || seen.has(id)) id = "custom-" + (index + 1);
+    let suffix = 2;
+    while (seen.has(id)) { id = "custom-" + (index + 1) + "-" + suffix; suffix += 1; }
+    seen.add(id);
+    return { id, type: row.type === "time" ? "time" : "text", labelKey: id, defaultLabel: String(row.defaultLabel || row.label || "新しい行").trim().slice(0, 40) || "新しい行", custom: true };
+  });
+}
+
+function getAllRows(state) {
+  const custom = state && state.settings && Array.isArray(state.settings.customRows) ? state.settings.customRows : [];
+  return ROW_DEFS.concat(custom);
+}
+
+function getRowDef(rowId, state) {
+  const rows = getAllRows(state || (typeof window !== "undefined" && window.WEEKLY_STATE ? window.WEEKLY_STATE.state : null));
+  return rows.find(row => row.id === rowId) || null;
 }
 
 function getCell(state, dateKey, rowId) {
@@ -375,11 +405,14 @@ function removeCell(state, dateKey, rowId) {
 }
 
 function getVisibleRows(state) {
-  return ROW_DEFS.filter(row => {
+  const rows = getAllRows(state);
+  const byId = new Map(rows.map(row => [row.id, row]));
+  const order = Array.isArray(state.settings.rowOrder) ? state.settings.rowOrder : rows.map(row => row.id);
+  const ordered = order.map(id => byId.get(id)).filter(Boolean);
+  rows.forEach(row => { if (!order.includes(row.id)) ordered.push(row); });
+  return ordered.filter(row => {
     if (row.id === "notice") return false;
-    if (row.type === "lesson") {
-      return row.period <= state.settings.periodCount && state.settings.visible[row.id] !== false;
-    }
+    if (row.type === "lesson") return row.period <= state.settings.periodCount && state.settings.visible[row.id] !== false;
     return state.settings.visible[row.id] !== false;
   });
 }
@@ -454,6 +487,7 @@ window.WEEKLY_PLAN = {
   createTextCell,
   createTimeCell,
   getRowDef,
+  getAllRows,
   getCell,
   setCell,
   removeCell,
