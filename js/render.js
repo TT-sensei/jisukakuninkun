@@ -242,6 +242,26 @@ function calculateSubjectCountsForRange(state, startDate, endDate) {
   return counts;
 }
 
+function renderAnnualTargetSummary(state, counts) {
+  const targets = state.settings.annualHours || {};
+  const configured = WEEKLY_PLAN.SUBJECTS.filter(function(subject) {
+    return Object.prototype.hasOwnProperty.call(targets, subject.id);
+  });
+  if (!configured.length) {
+    return '<p class="dashboard-settings-note">年間標準時数は未設定です。「週案の設定」から学校・学年の標準時数を登録すると、年度累計と残りの目安を確認できます。</p>';
+  }
+  return '<div class="annual-target-list">' + configured.map(function(subject) {
+    const target = targets[subject.id];
+    const actual = counts[subject.id] || 0;
+    const remaining = target - actual;
+    const percent = target > 0 ? Math.min(100, Math.round(actual / target * 100)) : (actual ? 100 : 0);
+    return '<div class="annual-target-row"><div class="annual-target-head"><span><i style="background:' +
+      escapeHTML(subject.color) + '"></i>' + escapeHTML(subject.label) + '</span><strong>' + actual + ' / ' + target + '時間</strong></div>' +
+      '<div class="annual-target-track"><span style="width:' + percent + '%;background:' + escapeHTML(subject.color) + '"></span></div>' +
+      '<div class="annual-target-foot">' + (remaining > 0 ? '目標まであと ' + remaining + '時間' : remaining === 0 ? '標準時数に到達' : '標準時数を ' + Math.abs(remaining) + '時間超過') + '</div></div>';
+  }).join('') + '</div>';
+}
+
 function renderRangeCountSummary(label, counts) {
   const total = Object.values(counts).reduce(function(sum, value) { return sum + value; }, 0);
   const items = WEEKLY_PLAN.SUBJECTS.filter(function(subject) { return counts[subject.id]; }).map(function(subject) {
@@ -499,7 +519,9 @@ function renderSidebar(state, selected) {
         const yearCounts = calculateSubjectCountsForRange(state, yearStart, cumulativeEnd);
         const endDate = WEEKLY_PLAN.fromISODate(cumulativeEnd);
         return renderRangeCountSummary((selectedWeek.getMonth() + 1) + "月の時数", monthCounts) +
-          renderRangeCountSummary("年度累計（4/1〜" + (endDate.getMonth() + 1) + "/" + endDate.getDate() + "）", yearCounts);
+          renderRangeCountSummary("年度累計（4/1〜" + (endDate.getMonth() + 1) + "/" + endDate.getDate() + "）", yearCounts) +
+          '<div class="annual-target-summary"><div class="annual-target-summary-title">年間標準時数との比較</div>' +
+          renderAnnualTargetSummary(state, yearCounts) + '</div>';
       })() +
       '<p class="dashboard-settings-note">保存済みの週案から集計します。未入力の授業は数えません。年間予定の祝日と欠課は除外します。</p></section>' +
 
@@ -568,6 +590,15 @@ function renderSettingsModal(state) {
           (row.custom ? '<button type="button" class="ghost-button row-remove-button" data-row-remove="' + row.id + '">削除</button>' : '') + '</div></div>';
       }).join("") + '</div>' +
       '<div class="custom-row-actions"><span>学校独自の行を追加</span><button type="button" class="secondary-button" data-row-add="text">文字入力の行</button><button type="button" class="secondary-button" data-row-add="time">時刻の行</button></div></section>' +
+    '<section class="settings-section"><div class="section-heading"><div><span class="eyebrow">ANNUAL HOURS</span><h3>教科ごとの年間標準時数</h3></div></div>' +
+      '<p class="settings-explain">学校・学年で使う年間標準時数を入力します。空欄の教科は比較に表示しません。ここで設定した値はこの週案データに保存されます。</p>' +
+      '<div class="annual-hours-settings">' +
+      WEEKLY_PLAN.SUBJECTS.map(function(subject) {
+        const value = Object.prototype.hasOwnProperty.call(state.settings.annualHours || {}, subject.id) ? state.settings.annualHours[subject.id] : "";
+        return '<label class="annual-hours-setting"><span><i style="background:' + escapeHTML(subject.color) + '"></i>' + escapeHTML(subject.label) + '</span>' +
+          '<input type="number" min="0" max="2000" step="1" inputmode="numeric" data-annual-hours="' + escapeHTML(subject.id) + '" value="' + escapeHTML(value === "" ? "" : String(value)) + '" placeholder="未設定" aria-label="' + escapeHTML(subject.label) + 'の年間標準時数">' +
+          '<small>時間</small></label>';
+      }).join("") + '</div></section>' +
     '<section class="settings-section"><div class="section-heading"><div><span class="eyebrow">PRINT</span><h3>印刷レイアウト</h3></div></div>' +
       '<div class="segmented"><label><input type="radio" name="printOrientation" value="portrait"' +
         (state.settings.printOrientation === "portrait" ? " checked" : "") + '><span>A4 縦</span></label>' +
